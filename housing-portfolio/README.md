@@ -1,123 +1,71 @@
-# Housing Value Analysis (2000–2025)
+# Data Analysis Portfolio
 
-## 📑 Overview
-This project analyzes **US state-level housing values** between 2000 and 2025.  
-It highlights long-term growth, the impact of the 2008 financial crisis, volatility, and affordability gaps.
-
----
-
-## 🛠 Methods
-- Cleaned dataset (~43 MB, ~680,000 rows)  
-- SQL queries using **DuckDB** (`sql/analysis.sql`)  
-- Automated analysis with **Python** (`scripts/run_analysis.py`)  
-- Reports generated as CSVs and charts (`reports/`)
+Welcome! 👋  
+This repository showcases my portfolio of data analysis projects, highlighting skills in **SQL**, **Python**, and **data visualization**.  
+The projects are grouped by tool/technology and include short descriptions, methods, and outcomes.
 
 ---
 
-## 🔍 Key Questions
-- Which states experienced the **fastest housing value growth** since 2000?  
-- Which states were **hardest hit during the 2008 housing crisis**?  
-- Which states show the **highest volatility** in housing values?  
-- Has the **gap widened** between the most and least expensive states?  
+## 👩‍💻 About Me
+I am an aspiring **Data Analyst** with hands-on experience in SQL, Python, and visualization.  
+My background in [add your domain if relevant, e.g. business, economics] helps me turn raw data into actionable insights.  
+
+I enjoy solving problems, building reproducible workflows, and telling stories with data.
 
 ---
 
-## 📊 Findings
-- **Fastest growth since 2000:** [Replace with result from reports/fastest_growth_since_2000.csv]  
-- **Hardest hit 2007–2009:** [Replace with result from reports/hardest_hit_2007_2009.csv]  
-- **Most volatile states:** [Replace with result from reports/volatility_by_state.csv]  
-- **Gap between expensive vs. affordable states:** [Replace with result from reports/gap_2000_vs_2025.csv]  
+## 🛠 Skills
+- **SQL** (PostgreSQL, DuckDB) — querying, CTEs, aggregations, analysis  
+- **Python** (pandas, matplotlib) — data cleaning, analysis, automation, visualization  
+- **Excel** — pivot tables, dashboards, quick exploration  
+- **Git & GitHub** — version control, Git LFS for large datasets  
+- **Data Storytelling** — writing findings clearly, embedding visuals, documenting methods  
 
 ---
 
-## 📈 Visuals
-![Fastest Growth Top 10](reports/figures/fastest_growth_top10.png)  
-![Hardest Hit 2007–2009](reports/figures/hardest_hit_2007_2009_worst10.png)  
-![Volatility Top 10](reports/figures/volatility_top10.png)
+## 📂 Portfolio Projects
+
+### 📊 SQL Projects
+- [Housing Value Analysis](sql-projects/housing-portfolio)  
+  *Analyzed US housing values from 2000–2025.*  
+  - Tools: SQL (DuckDB), Python, matplotlib  
+  - Key questions: growth trends, 2008 crisis impact, volatility, affordability gap  
+  - Deliverables: SQL queries, reproducible Python pipeline, charts & CSV reports  
+
+*(More SQL projects coming soon — mini queries and case studies.)*
 
 ---
 
-## 📑 Dataset
-- **Full dataset:** `home_values_yearly_clean.csv` (~43 MB, ~680,000 rows) — tracked with *Git LFS*.  
-- **Sample dataset:** `sample_home_values_yearly_clean.csv` (~60 KB) — included for quick inspection on GitHub.  
-
-All analysis was run on the **full dataset**; the sample is for convenience.  
-
----
-# Housing Value Analysis (2000–2025)
-
-## 📑 Overview
-This project analyzes **US state-level housing values** between 2000 and 2025.  
-It highlights long-term growth, the impact of the 2008 financial crisis, volatility, and affordability gaps.
+### 🐍 Python Projects
+*(Coming soon — exploratory analysis with pandas and matplotlib)*
 
 ---
 
-## 🛠 Methods
-- **Dataset:** ~43 MB, ~680,000 rows (2000–2025)  
-- **Tools:** SQL with DuckDB, Python (pandas, matplotlib)  
-- **Process:**  
-  1. Cleaned dataset (handled missing values, reshaped monthly → yearly averages).  
-  2. Aggregated by **state and year**.  
-  3. SQL queries stored in [`sql/analysis.sql`](sql/analysis.sql).  
-  4. Automated pipeline with [`scripts/run_analysis.py`](scripts/run_analysis.py).  
-  5. Generated reports (`reports/*.csv`) and charts (`reports/figures/*.png`).  
+### 📈 Excel & Visualization Projects
+*(Coming soon — Excel dashboards, Tableau/Power BI visualizations)*
 
 ---
 
-## 🔍 Key Questions
-- Which states experienced the **fastest housing value growth** since 2000?  
-- Which states were **hardest hit during the 2008 housing crisis**?  
-- Which states show the **highest volatility** in housing values?  
-- Has the **gap widened** between the most and least expensive states?  
+### 📊 R Projects
+*(Future work — statistical modeling and visualization in R)*
 
 ---
 
-## 📊 Findings
-- **Fastest growth since 2000:**  
-  States in the West and South showed the strongest appreciation. *[See full ranking in `reports/fastest_growth_since_2000.csv`]*
-  
-- **Hardest hit 2007–2009:**  
-  Several states saw steep declines during the housing crisis, with double-digit percentage drops. *[See details in `reports/hardest_hit_2007_2009.csv`]*
-  
-- **Most volatile states:**  
-  Markets in Nevada, Florida, and California showed the greatest fluctuations year-over-year. *[See `reports/volatility_by_state.csv`]*
-  
-- **Gap trend (2000 vs 2025):**  
-  The difference between the most and least expensive states widened significantly, suggesting growing affordability disparities. *[See `reports/gap_2000_vs_2025.csv`]*
+## 🎓 Education & Certifications
+- [Add your degree or diploma if you’d like, e.g. B.A. in Economics, 2022]  
+- [Add certificates if any, e.g. Google Data Analytics Certificate]  
+- [Add ongoing learning if relevant, e.g. Tableau/Power BI courses]  
 
 ---
 
-## 📈 Visuals
-- **Fastest Growth Top 10**  
-  ![Fastest Growth](reports/figures/fastest_growth_top10.png)
-
-- **Hardest Hit 2007–2009 (Worst 10)**  
-  ![Hardest Hit](reports/figures/hardest_hit_2007_2009_worst10.png)
-
-- **Volatility Top 10**  
-  ![Volatility](reports/figures/volatility_top10.png)
+## 📑 CV
+📄 [Download my CV](CV.pdf) *(coming soon)*  
 
 ---
 
-## 📑 Dataset
-- **Full dataset:** `data/home_values_yearly_clean.csv` (~43 MB, ~680,000 rows) — tracked with *Git LFS*.  
-- **Sample dataset:** `data/sample_home_values_yearly_clean.csv` (~60 KB) — quick inspection on GitHub.  
-
-👉 Analyses were run on the **full dataset**; the sample is included for convenience.  
-
----
-
-## ⚖️ Limitations
-- Analysis is at the **state level**; county/city trends may differ.  
-- Yearly averages may mask short-term volatility within months.  
-- Missing values in raw data were retained, which may affect some states.  
-
----
-
-## 🚀 Future Work
-- Add **rolling averages** to smooth out volatility.  
-- Extend analysis to **affordability metrics** (housing vs. income).  
-- Build an **interactive dashboard** (Tableau/Power BI/Streamlit).  
-- Compare housing trends with **economic indicators** (GDP, employment).  
+## 📬 Contact
+- **GitHub:** [Qin717](https://github.com/Qin717)  
+- **LinkedIn:** [Your LinkedIn Profile](#)  
+- **Email:** [your.email@example.com]  
 
 ---
