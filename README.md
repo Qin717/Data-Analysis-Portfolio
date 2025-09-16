@@ -30,6 +30,13 @@ I enjoy solving problems, uncovering insights from raw data, and presenting them
   - Key questions: growth trends, 2008 crisis impact, volatility, affordability gap  
   - Deliverables: SQL queries, reproducible Python pipeline, charts & CSV reports  
 
+#### 📊 Key Findings (Q1: Fastest Growth Since 2000)
+- Nevada grew the fastest in housing values since 2000 (+185%).
+- West Virginia grew the slowest (+25%).
+- The gap between fastest and slowest states highlights regional differences.
+
+📈 [See reports and charts →](housing-portfolio/reports/)
+
 ---
 
 ### 🐍 Python Projects
