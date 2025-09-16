@@ -1,5 +1,3 @@
-python scripts/run_analysis.py --data data/home_values_yearly_clean.csv
-
 -- Q1. Which states have experienced the fastest and slowest growth 
 -- in housing values since 2000?
 
