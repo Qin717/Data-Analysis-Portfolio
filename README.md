@@ -1,40 +1,44 @@
-Data Analytics Portfolio
-========================
+# Data Analysis Portfolio
 
-Turning data into clear, actionable insight.
+A collection of data analysis projects showcasing my skills in SQL, Python, and data visualization.  
+Inspired by Tianna Parris’s portfolio style — simple, clear, and recruiter-friendly.
 
-About Me
---------
+---
 
-I’m a data analyst who enjoys translating messy, real-world data into concise stories that drive decisions. I work end‑to‑end: scoping questions with stakeholders, building reliable data pipelines, and delivering analyses and visuals that are easy to act on. My work emphasizes clarity, reproducibility, and thoughtful communication.
+## 👩‍💻 About Me
+I am an aspiring data analyst with hands-on experience in **SQL**, **Python**, and **data visualization**.  
+This portfolio highlights my ability to clean, analyze, and present data in a business-focused way.
 
-Skills
-------
+---
 
-- **SQL**: querying, CTEs, window functions, optimization
-- **Python**: pandas, numpy, duckdb, matplotlib/seaborn, notebooks
-- **R**: tidyverse, ggplot2 (as needed for visualization/reporting)
-- **Excel/Google Sheets**: modeling, pivot tables, data cleaning
-- **Visualization**: dashboards, clear static charts, data storytelling
-- **Version Control**: Git/GitHub, PRs, code reviews
-- **Reproducibility**: environments, requirements, templated analyses
+## 🛠 Skills
+- **SQL** (PostgreSQL, DuckDB)  
+- **Python** (pandas, matplotlib)  
+- **Data Visualization** (charts, reports)  
+- **Excel** (pivot tables, dashboards)  
+- **Version Control** (Git, GitHub, Git LFS)  
 
-Projects
---------
+---
 
-- **Housing Portfolio** — time-series analysis of U.S. home values, including growth rates, volatility, and the 2007–2009 downturn, with reproducible scripts and figures.
-  - Explore the project: [`housing-portfolio/`](housing-portfolio/)
+## 📂 Projects by Skill
 
-Contact
--------
+### 📊 SQL Projects
+- [Housing Value Analysis](housing-portfolio) — Trends in US housing values (2000–2025)
 
-- **GitHub**: `https://github.com/<your-username>`
-- **LinkedIn**: `https://www.linkedin.com/in/<your-handle>`
-- **CV**: `CV.pdf` (add to the repository root when ready)
+### 🐍 Python Projects
+*(Coming soon — additional analysis with pandas and matplotlib)*
 
-Notes
------
+### 📈 Excel & Visualization Projects
+*(Coming soon — Excel pivot tables, dashboards, and Tableau projects)*
 
-- To reproduce analyses locally, see `housing-portfolio/requirements.txt` and `housing-portfolio/scripts/run_analysis.py`.
+### 📊 R Projects
+*(Future work — statistical modeling and visualization in R)*
 
+---
 
+## 📬 Contact
+- **GitHub:** [Qin717](https://github.com/Qin717)  
+- **LinkedIn:** [Your LinkedIn Profile](#)  
+- 📄 CV: *Coming soon*  
+
+---
