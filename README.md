@@ -23,7 +23,8 @@ This portfolio highlights my ability to clean, analyze, and present data in a bu
 ## 📂 Projects by Skill
 
 ### 📊 SQL Projects
-- [Housing Value Analysis](sql-projects/housing-portfolio) — Trends in US housing values (2000–2025)
+- [Housing Value Analysis](housing-portfolio) — Trends in US housing values (2000–2025)
+
 
 ### 🐍 Python Projects
 *(Coming soon — additional analysis with pandas and matplotlib)*
