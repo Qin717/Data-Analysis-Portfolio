@@ -1,45 +1,67 @@
 # Data Analysis Portfolio
 
-A collection of data analysis projects showcasing my skills in SQL, Python, and data visualization.  
-Inspired by Tianna Parris’s portfolio style — simple, clear, and recruiter-friendly.
+Welcome! 👋  
+This repository showcases my portfolio of data analysis projects, highlighting skills in **SQL**, **Python**, **Excel**, and **data visualization**.  
+Projects are grouped by skill area, each with its own folder and case study.
 
 ---
 
 ## 👩‍💻 About Me
-I am an aspiring data analyst with hands-on experience in **SQL**, **Python**, and **data visualization**.  
-This portfolio highlights my ability to clean, analyze, and present data in a business-focused way.
+I am an aspiring **Data Analyst** with hands-on experience in SQL, Python, and visualization.  
+I enjoy solving problems, uncovering insights from raw data, and presenting them in clear, actionable ways.  
 
 ---
 
 ## 🛠 Skills
-- **SQL** (PostgreSQL, DuckDB)  
-- **Python** (pandas, matplotlib)  
-- **Data Visualization** (charts, reports)  
-- **Excel** (pivot tables, dashboards)  
-- **Version Control** (Git, GitHub, Git LFS)  
+- **SQL** (PostgreSQL, DuckDB) — querying, CTEs, aggregations, analysis  
+- **Python** (pandas, matplotlib) — data cleaning, analysis, automation, visualization  
+- **Excel** — pivot tables, dashboards, quick exploration  
+- **Git & GitHub** — version control, Git LFS for large datasets  
+- **Data Storytelling** — documenting methods and communicating findings with visuals  
 
 ---
 
-## 📂 Projects by Skill
+## 📂 Portfolio Projects
 
 ### 📊 SQL Projects
-- [Housing Value Analysis](housing-portfolio) — Trends in US housing values (2000–2025)
+- [Housing Value Analysis](housing-portfolio)  
+  *Analyzed US housing values from 2000–2025.*  
+  - Tools: SQL (DuckDB), Python, matplotlib  
+  - Key questions: growth trends, 2008 crisis impact, volatility, affordability gap  
+  - Deliverables: SQL queries, reproducible Python pipeline, charts & CSV reports  
 
+---
 
 ### 🐍 Python Projects
-*(Coming soon — additional analysis with pandas and matplotlib)*
+*(Coming soon — exploratory analysis with pandas and matplotlib)*
+
+---
 
 ### 📈 Excel & Visualization Projects
-*(Coming soon — Excel pivot tables, dashboards, and Tableau projects)*
+*(Coming soon — Excel dashboards, Tableau/Power BI visualizations)*
+
+---
 
 ### 📊 R Projects
 *(Future work — statistical modeling and visualization in R)*
 
 ---
 
+## 🎓 Education & Certifications
+- [Add your degree or diploma, e.g. B.A. in Economics]  
+- [Add certificates if any, e.g. Google Data Analytics Certificate]  
+- [Add ongoing learning if relevant, e.g. Tableau/Power BI courses]  
+
+---
+
+## 📑 CV
+📄 [Download my CV](CV.pdf) *(coming soon)*  
+
+---
+
 ## 📬 Contact
 - **GitHub:** [Qin717](https://github.com/Qin717)  
 - **LinkedIn:** [Your LinkedIn Profile](#)  
-- 📄 CV: *Coming soon*  
+- **Email:** [your.email@example.com]  
 
 ---
