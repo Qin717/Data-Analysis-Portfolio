@@ -1,3 +1,8 @@
+python scripts/run_analysis.py --data data/home_values_yearly_clean.csv
+
+-- Q1. Which states have experienced the fastest and slowest growth 
+-- in housing values since 2000?
+
 WITH state_values AS (
     SELECT
         statename,
@@ -24,5 +29,6 @@ SELECT
 FROM growth_calc
 WHERE value_2000 IS NOT NULL AND value_2025 IS NOT NULL
 ORDER BY pct_growth DESC
-LIMIT 5;  -- Top 5 fastest growing states
+LIMIT 5;  -- top 5 fastest growing states
 
+-- To find the slowest, rerun with ORDER BY pct_growth ASC LIMIT 5
