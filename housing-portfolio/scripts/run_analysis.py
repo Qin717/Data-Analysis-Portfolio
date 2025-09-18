@@ -227,57 +227,39 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     df4 = con.execute(q4).df()
     df_to_csv(df4, "q4_cities_counties_by_state")
     
-    # Create a professional table for Q4 showing top 15 states
+    # Create a bar chart for Q4 showing top 10 states by number of cities
     if not df4.empty:
-        # Get top 15 states by number of cities
-        df4_top15 = df4.head(15)
+        # Get top 10 states by number of cities
+        df4_top10 = df4.head(10)
         
-        # Create a professional table visualization
-        fig, ax = plt.subplots(figsize=(12, 10))
-        ax.axis('tight')
-        ax.axis('off')
+        plt.figure(figsize=(12, 8))
         
-        # Prepare data for table
-        table_data = []
-        for _, row in df4_top15.iterrows():
-            table_data.append([
-                row['statename'],
-                f"{int(row['unique_cities']):,}",
-                f"{int(row['unique_counties']):,}"
-            ])
+        # Create grouped bar chart
+        states = df4_top10['statename']
+        cities = df4_top10['unique_cities']
+        counties = df4_top10['unique_counties']
         
-        # Create table
-        table = ax.table(
-            cellText=table_data,
-            colLabels=['State', 'Cities', 'Counties'],
-            cellLoc='center',
-            loc='center',
-            bbox=[0, 0, 1, 1]
-        )
+        x = range(len(states))
+        width = 0.35
         
-        # Style the table
-        table.auto_set_font_size(False)
-        table.set_fontsize(11)
-        table.scale(1, 2)
+        bars1 = plt.bar([i - width/2 for i in x], cities, width, label='Cities', color='#4CAF50', alpha=0.8, edgecolor='white', linewidth=1)
+        bars2 = plt.bar([i + width/2 for i in x], counties, width, label='Counties', color='#2196F3', alpha=0.8, edgecolor='white', linewidth=1)
         
-        # Style header row
-        for i in range(3):
-            table[(0, i)].set_facecolor('#4CAF50')
-            table[(0, i)].set_text_props(weight='bold', color='white')
+        plt.title('Top 10 States by Number of Cities and Counties Tracked', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('State', fontsize=12, fontweight='bold')
+        plt.ylabel('Count', fontsize=12, fontweight='bold')
+        plt.xticks(x, states, rotation=45, ha='right', fontsize=10)
+        plt.yticks(fontsize=10)
+        plt.legend(fontsize=10)
         
-        # Style data rows with alternating colors
-        for i in range(1, len(table_data) + 1):
-            for j in range(3):
-                if i % 2 == 0:
-                    table[(i, j)].set_facecolor('#F5F5F5')
-                else:
-                    table[(i, j)].set_facecolor('white')
-                table[(i, j)].set_text_props(weight='normal')
+        # Add value labels on bars
+        for bars in [bars1, bars2]:
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width()/2., height + height*0.01,
+                        f'{int(height)}', ha='center', va='bottom', fontsize=9, fontweight='bold')
         
-        # Add title
-        plt.title('Top 15 States by Number of Cities and Counties Tracked', 
-                 fontsize=16, fontweight='bold', pad=20)
-        
+        plt.grid(axis='y', alpha=0.3, linestyle='--')
         plt.tight_layout()
         
         out = FIGS / "q4_cities_counties_by_state.png"
