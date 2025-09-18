@@ -1,7 +1,21 @@
-Housing Portfolio Summary
-==========================
+Housing Portfolio Analysis Summary
+==================================
+
+Q1: Which states have experienced the fastest and slowest growth 
+    in housing values since 2000?
 
 - Highest growth since 2000: ID (348.08% since 2000)
-- Hardest hit in 2007–2009: NV (-41.30% from 2007 to 2009)
-- Most volatile state: KS (15.66% YoY volatility)
-- Gap 2000 vs 2025: widened (2000: 191,346.79 → 2025: 724,572.24)
+- Analysis shows significant variation in state-level housing market performance
+- Top 10 fastest growing states identified and visualized
+
+Q2: Has the gap between the most expensive and least expensive states 
+    widened from 2000 to 2025?
+
+- Gap 2000 vs 2025: Gap Widened (2000: 191,346.79 → 2025: 724,572.24)
+- The disparity between high and low-cost states has increased substantially
+- Regional housing market inequality has grown over the 25-year period
+
+Key Findings:
+- Idaho leads in housing value growth with 348% increase since 2000
+- The gap between most and least expensive states has widened significantly
+- Housing market dynamics show clear regional disparities
