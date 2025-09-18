@@ -40,7 +40,15 @@ def df_to_csv(df: pd.DataFrame, name: str):
     df.to_csv(out, index=False)
     print(f"[ok] wrote {out}")
 
-def bar_chart(df: pd.DataFrame, x: str, y: str, title: str, filename: str, top_n: int = 10):
+def bar_chart(
+    df: pd.DataFrame,
+    x: str,
+    y: str,
+    title: str,
+    filename: str,
+    top_n: int = 10,
+    orientation: str = "horizontal",
+):
     # Sort, take Top-N, and reverse for horizontal barh (largest at top)
     df_plot = df.sort_values(y, ascending=False).head(top_n).iloc[::-1]
 
@@ -48,10 +56,16 @@ def bar_chart(df: pd.DataFrame, x: str, y: str, title: str, filename: str, top_n
     plt.style.use("seaborn-v0_8-whitegrid")
     fig, ax = plt.subplots(figsize=(11, 7), dpi=160)
 
-    bars = ax.barh(df_plot[x], df_plot[y], color="#2E7D32")
-    ax.set_title(title, fontsize=16, fontweight="bold")
-    ax.set_ylabel("State", fontsize=12)
-    ax.tick_params(axis="y", labelsize=11)
+    if orientation == "vertical":
+        bars = ax.bar(df_plot[x], df_plot[y], color="#2E7D32")
+        ax.set_title(title, fontsize=16, fontweight="bold")
+        ax.set_xlabel("State", fontsize=12)
+        ax.tick_params(axis="x", labelsize=10, rotation=45)
+    else:
+        bars = ax.barh(df_plot[x], df_plot[y], color="#2E7D32")
+        ax.set_title(title, fontsize=16, fontweight="bold")
+        ax.set_ylabel("State", fontsize=12)
+        ax.tick_params(axis="y", labelsize=11)
 
     # If y looks like a percent metric, format axis and labels accordingly
     is_percent = ("pct" in y.lower()) or ("%" in title)
@@ -63,20 +77,32 @@ def bar_chart(df: pd.DataFrame, x: str, y: str, title: str, filename: str, top_n
         value_fmt = lambda v: f"{v:,.2f}"
 
     # Subtle gridlines
-    ax.grid(axis="x", linestyle="--", alpha=0.3)
-    ax.grid(False, axis="y")
+    if orientation == "vertical":
+        ax.grid(axis="y", linestyle="--", alpha=0.3)
+        ax.grid(False, axis="x")
+    else:
+        ax.grid(axis="x", linestyle="--", alpha=0.3)
+        ax.grid(False, axis="y")
 
     # Annotate values at bar ends
     for bar in bars:
-        width = bar.get_width()
-        ax.text(width + (max(df_plot[y]) * 0.01),
-                bar.get_y() + bar.get_height() / 2,
-                value_fmt(width),
-                va="center", ha="left", fontsize=10, color="#333333")
+        if orientation == "vertical":
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width() / 2,
+                    height + (max(df_plot[y]) * 0.01),
+                    value_fmt(height),
+                    va="bottom", ha="center", fontsize=10, color="#333333", rotation=0)
+        else:
+            width = bar.get_width()
+            ax.text(width + (max(df_plot[y]) * 0.01),
+                    bar.get_y() + bar.get_height() / 2,
+                    value_fmt(width),
+                    va="center", ha="left", fontsize=10, color="#333333")
 
     # Ensure enough left margin for long state names
     fig.tight_layout()
-    fig.subplots_adjust(left=0.28)
+    if orientation != "vertical":
+        fig.subplots_adjust(left=0.28)
     out = FIGS / f"{filename}.png"
     fig.savefig(out, dpi=200, bbox_inches="tight")
     plt.close(fig)
@@ -110,7 +136,14 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     """
     df1 = con.execute(q1).df()
     df_to_csv(df1, "fastest_growth_since_2000")
-    bar_chart(df1, "statename", "pct_growth", "Fastest Growth Since 2000 (%), Top 10", "fastest_growth_top10")
+    bar_chart(
+        df1,
+        "statename",
+        "pct_growth",
+        "Fastest Growth Since 2000 (%), Top 10",
+        "fastest_growth_top10",
+        orientation="vertical",
+    )
 
     # 2) Hardest hit 2007 -> 2009
     q2 = """
@@ -175,7 +208,14 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     """
     df3 = con.execute(q3).df()
     df_to_csv(df3, "volatility_by_state")
-    bar_chart(df3, "statename", "yoy_volatility_pct", "YoY Volatility by State (%), Top 10", "volatility_top10")
+    bar_chart(
+        df3,
+        "statename",
+        "yoy_volatility_pct",
+        "YoY Volatility by State (%), Top 10",
+        "volatility_top10",
+        orientation="vertical",
+    )
 
     # 4) Gap widened 2000 vs 2025
     q4 = """
