@@ -78,7 +78,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     ORDER BY statename, year;
     """
     df1 = con.execute(q1).df()
-    df_to_csv(df1, "yearly_average_by_state")
+    df_to_csv(df1, "q1_yearly_average_by_state")
     
     # Create a line chart for Q1 showing trends over time
     if not df1.empty:
@@ -99,7 +99,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
         
-        out = FIGS / "yearly_trends_top10.png"
+        out = FIGS / "q1_yearly_trends_top10_states.png"
         plt.savefig(out, dpi=200, bbox_inches="tight")
         plt.close()
         print(f"[ok] wrote {out}")
@@ -134,8 +134,8 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     LIMIT 5;
     """
     df2 = con.execute(q2).df()
-    df_to_csv(df2, "highest_growth_2000_2025")
-    bar_chart(df2, "statename", "pct_growth", "Top 5 States with Highest Growth in Home Values (2000-2025)", "highest_growth_top5")
+    df_to_csv(df2, "q2_top5_states_highest_growth_2000_2025")
+    bar_chart(df2, "statename", "pct_growth", "Top 5 States with Highest Growth in Home Values (2000-2025)", "q2_top5_states_highest_growth")
     
     # Q3: Which top 5 cities have shown the highest growth in home value index from 2000 to 2025?
     q3 = """
@@ -177,27 +177,27 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     LIMIT 5;
     """
     df3 = con.execute(q3).df()
-    df_to_csv(df3, "highest_growth_cities_2000_2025")
+    df_to_csv(df3, "q3_top5_cities_highest_growth_2000_2025")
     
     # Create a bar chart for Q3 with city names
     if not df3.empty:
         # Create a combined city-state label for better readability
         df3['city_state'] = df3['city'] + ', ' + df3['statename']
-        bar_chart(df3, "city_state", "pct_growth", "Top 5 Cities with Highest Growth in Home Values (2000-2025)", "highest_growth_cities_top5")
+        bar_chart(df3, "city_state", "pct_growth", "Top 5 Cities with Highest Growth in Home Values (2000-2025)", "q3_top5_cities_highest_growth")
 
 
 def write_summary():
     """Generate reports/summary.txt from the computed CSV outputs."""
     try:
-        yearly_avg = pd.read_csv(REPORTS / "yearly_average_by_state.csv")
+        yearly_avg = pd.read_csv(REPORTS / "q1_yearly_average_by_state.csv")
     except FileNotFoundError:
         yearly_avg = pd.DataFrame()
     try:
-        growth = pd.read_csv(REPORTS / "highest_growth_2000_2025.csv")
+        growth = pd.read_csv(REPORTS / "q2_top5_states_highest_growth_2000_2025.csv")
     except FileNotFoundError:
         growth = pd.DataFrame()
     try:
-        city_growth = pd.read_csv(REPORTS / "highest_growth_cities_2000_2025.csv")
+        city_growth = pd.read_csv(REPORTS / "q3_top5_cities_highest_growth_2000_2025.csv")
     except FileNotFoundError:
         city_growth = pd.DataFrame()
 
