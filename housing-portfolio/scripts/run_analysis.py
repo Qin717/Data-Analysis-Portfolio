@@ -213,6 +213,59 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.savefig(out, dpi=200, bbox_inches="tight")
         plt.close()
         print(f"[ok] wrote {out}")
+    
+    # Q4: How many cities & counties are in each state?
+    q4 = """
+    SELECT
+        statename,
+        COUNT(DISTINCT city) AS unique_cities,
+        COUNT(DISTINCT countyname) AS unique_counties
+    FROM home_values_yearly_clean
+    GROUP BY statename
+    ORDER BY unique_cities DESC;
+    """
+    df4 = con.execute(q4).df()
+    df_to_csv(df4, "q4_cities_counties_by_state")
+    
+    # Create a chart for Q4 showing top 10 states by number of cities
+    if not df4.empty:
+        # Get top 10 states by number of cities
+        df4_top10 = df4.head(10)
+        
+        plt.figure(figsize=(12, 8))
+        
+        # Create grouped bar chart
+        states = df4_top10['statename']
+        cities = df4_top10['unique_cities']
+        counties = df4_top10['unique_counties']
+        
+        x = range(len(states))
+        width = 0.35
+        
+        bars1 = plt.bar([i - width/2 for i in x], cities, width, label='Cities', color='#4CAF50', alpha=0.8)
+        bars2 = plt.bar([i + width/2 for i in x], counties, width, label='Counties', color='#2196F3', alpha=0.8)
+        
+        plt.title('Top 10 States by Number of Cities and Counties Tracked', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('State', fontsize=12, fontweight='bold')
+        plt.ylabel('Count', fontsize=12, fontweight='bold')
+        plt.xticks(x, states, rotation=45, ha='right', fontsize=10)
+        plt.yticks(fontsize=10)
+        plt.legend(fontsize=10)
+        
+        # Add value labels on bars
+        for bars in [bars1, bars2]:
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width()/2., height + height*0.01,
+                        f'{int(height)}', ha='center', va='bottom', fontsize=9, fontweight='bold')
+        
+        plt.grid(axis='y', alpha=0.3, linestyle='--')
+        plt.tight_layout()
+        
+        out = FIGS / "q4_cities_counties_by_state.png"
+        plt.savefig(out, dpi=200, bbox_inches="tight")
+        plt.close()
+        print(f"[ok] wrote {out}")
 
 
 def write_summary():
@@ -229,6 +282,10 @@ def write_summary():
         city_growth = pd.read_csv(REPORTS / "q3_top5_cities_highest_growth_2000_2025.csv")
     except FileNotFoundError:
         city_growth = pd.DataFrame()
+    try:
+        state_counts = pd.read_csv(REPORTS / "q4_cities_counties_by_state.csv")
+    except FileNotFoundError:
+        state_counts = pd.DataFrame()
 
     # Compute findings with fallbacks
     yearly_stats_line = "N/A"
@@ -246,6 +303,11 @@ def write_summary():
     if not city_growth.empty and {"city", "statename", "pct_growth"}.issubset(city_growth.columns):
         top_city_growth = city_growth.sort_values("pct_growth", ascending=False).head(1).iloc[0]
         highest_city_growth_line = f"{top_city_growth['city']}, {top_city_growth['statename']} ({top_city_growth['pct_growth']:.2f}% growth)"
+    
+    state_counts_line = "N/A"
+    if not state_counts.empty and {"statename", "unique_cities"}.issubset(state_counts.columns):
+        top_state = state_counts.head(1).iloc[0]
+        state_counts_line = f"{top_state['statename']} has the most cities ({top_state['unique_cities']})"
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     out_path = REPORTS / "summary.txt"
@@ -255,6 +317,7 @@ def write_summary():
         f.write("- Dataset coverage: " + yearly_stats_line + "\n")
         f.write("- Highest state growth 2000-2025: " + highest_growth_line + "\n")
         f.write("- Highest city growth 2000-2025: " + highest_city_growth_line + "\n")
+        f.write("- Most cities tracked: " + state_counts_line + "\n")
     print(f"[ok] wrote {out_path}")
 
 def main():
