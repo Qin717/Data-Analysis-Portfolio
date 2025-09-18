@@ -160,26 +160,69 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     df_to_csv(df3, "volatility_by_state")
     bar_chart(df3, "statename", "yoy_volatility_pct", "YoY Volatility by State (%), Top 10", "volatility_top10")
 
-    # 4) Gap widened 2000 vs 2025
+    # 4) Gap analysis between most/least expensive states 2000 vs 2025
     q4 = """
-    WITH state_year AS (
-      SELECT statename, year, AVG(yearlyindex) AS avg_index
-      FROM home_values_yearly_clean
-      WHERE yearlyindex IS NOT NULL
-      GROUP BY 1,2
+    WITH state_values AS (
+        SELECT
+            statename,
+            year,
+            ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
+        FROM home_values_yearly_clean
+        GROUP BY statename, year
     ),
-    gap_by_year AS (
-      SELECT year, MAX(avg_index) - MIN(avg_index) AS gap
-      FROM state_year
-      GROUP BY year
+    gap_analysis AS (
+        SELECT
+            year,
+            MAX(avg_yearly_index) AS max_value,
+            MIN(avg_yearly_index) AS min_value,
+            MAX(avg_yearly_index) - MIN(avg_yearly_index) AS gap,
+            ROUND(((MAX(avg_yearly_index) - MIN(avg_yearly_index)) / MIN(avg_yearly_index)) * 100, 2) AS gap_pct
+        FROM state_values
+        WHERE year IN (2000, 2025)
+        GROUP BY year
     )
-    SELECT year, ROUND(gap, 2) AS gap
-    FROM gap_by_year
-    WHERE year IN (2000, 2025)
+    SELECT
+        year,
+        max_value,
+        min_value,
+        gap,
+        gap_pct,
+        CASE 
+            WHEN year = 2000 THEN 'Baseline'
+            WHEN year = 2025 THEN 
+                CASE 
+                    WHEN gap > LAG(gap) OVER (ORDER BY year) THEN 'Gap Widened'
+                    WHEN gap < LAG(gap) OVER (ORDER BY year) THEN 'Gap Narrowed'
+                    ELSE 'Gap Unchanged'
+                END
+        END AS gap_trend
+    FROM gap_analysis
     ORDER BY year;
     """
     df4 = con.execute(q4).df()
-    df_to_csv(df4, "gap_2000_vs_2025")
+    df_to_csv(df4, "gap_analysis_2000_2025")
+    
+    # Create a simple comparison chart for the gap
+    if len(df4) >= 2:
+        plt.figure(figsize=(10, 6))
+        years = df4['year'].astype(str)
+        gaps = df4['gap']
+        
+        bars = plt.bar(years, gaps, color=['#1f77b4', '#ff7f0e'])
+        plt.title('Gap Between Most and Least Expensive States: 2000 vs 2025', fontsize=14, fontweight='bold')
+        plt.xlabel('Year', fontsize=12)
+        plt.ylabel('Gap (Index Points)', fontsize=12)
+        
+        # Add value labels on bars
+        for bar, gap in zip(bars, gaps):
+            plt.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 5,
+                    f'{gap:.1f}', ha='center', va='bottom', fontsize=11, fontweight='bold')
+        
+        plt.tight_layout()
+        out = FIGS / "gap_comparison_2000_2025.png"
+        plt.savefig(out, dpi=200, bbox_inches="tight")
+        plt.close()
+        print(f"[ok] wrote {out}")
 
 def write_summary():
     """Generate reports/summary.txt from the computed CSV outputs."""
@@ -196,7 +239,7 @@ def write_summary():
     except FileNotFoundError:
         vol = pd.DataFrame()
     try:
-        gap = pd.read_csv(REPORTS / "gap_2000_vs_2025.csv")
+        gap = pd.read_csv(REPORTS / "gap_analysis_2000_2025.csv")
     except FileNotFoundError:
         gap = pd.DataFrame()
 
@@ -217,13 +260,12 @@ def write_summary():
         most_volatile_line = f"{mv['statename']} ({mv['yoy_volatility_pct']:.2f}% YoY volatility)"
 
     gap_verdict_line = "N/A"
-    if not gap.empty and {"year", "gap"}.issubset(gap.columns) and len(gap) >= 2:
+    if not gap.empty and {"year", "gap", "gap_trend"}.issubset(gap.columns) and len(gap) >= 2:
         gap_2000 = float(gap.loc[gap["year"] == 2000, "gap"].iloc[0]) if not gap.loc[gap["year"] == 2000].empty else None
         gap_2025 = float(gap.loc[gap["year"] == 2025, "gap"].iloc[0]) if not gap.loc[gap["year"] == 2025].empty else None
+        gap_trend = gap.loc[gap["year"] == 2025, "gap_trend"].iloc[0] if not gap.loc[gap["year"] == 2025].empty else "Unknown"
         if gap_2000 is not None and gap_2025 is not None:
-            widened = gap_2025 > gap_2000
-            direction = "widened" if widened else ("narrowed or unchanged")
-            gap_verdict_line = f"{direction} (2000: {gap_2000:,.2f} → 2025: {gap_2025:,.2f})"
+            gap_verdict_line = f"{gap_trend} (2000: {gap_2000:,.2f} → 2025: {gap_2025:,.2f})"
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     out_path = REPORTS / "summary.txt"
