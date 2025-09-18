@@ -73,34 +73,3 @@ SELECT
 FROM gap_analysis
 ORDER BY year;
 
--- Q3. Which are the top 5 and bottom 5 states 
--- in average housing values for 2025?
-
-WITH state_values AS (
-    SELECT
-        statename,
-        year,
-        ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
-    FROM home_values_yearly_clean
-    GROUP BY statename, year
-),
-
-yearly_rankings AS (
-    SELECT
-        statename,
-        year,
-        avg_yearly_index,
-        ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index DESC) AS rank_desc,
-        ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index ASC)  AS rank_asc
-    FROM state_values
-)
-
-SELECT 'Top 5' AS category, statename, avg_yearly_index, rank_desc
-FROM yearly_rankings
-WHERE year = 2025 AND rank_desc <= 5
-
-UNION ALL
-
-SELECT 'Bottom 5' AS category, statename, avg_yearly_index, rank_asc
-FROM yearly_rankings
-WHERE year = 2025 AND rank_asc <= 5;

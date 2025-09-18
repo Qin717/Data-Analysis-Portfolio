@@ -163,79 +163,6 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.close()
         print(f"[ok] wrote {out}")
 
-    # Q3: Which are the top 5 and bottom 5 states 
-    # in average housing values for 2025?
-    q3 = """
-    WITH state_values AS (
-        SELECT
-            statename,
-            year,
-            ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
-        FROM home_values_yearly_clean
-        GROUP BY statename, year
-    ),
-    yearly_rankings AS (
-        SELECT
-            statename,
-            year,
-            avg_yearly_index,
-            ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index DESC) AS rank_desc,
-            ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index ASC)  AS rank_asc
-        FROM state_values
-    )
-    SELECT 'Top 5' AS category, statename, avg_yearly_index, rank_desc
-    FROM yearly_rankings
-    WHERE year = 2025 AND rank_desc <= 5
-    UNION ALL
-    SELECT 'Bottom 5' AS category, statename, avg_yearly_index, rank_asc
-    FROM yearly_rankings
-    WHERE year = 2025 AND rank_asc <= 5;
-    """
-    df3 = con.execute(q3).df()
-    df_to_csv(df3, "consistent_rankings_analysis")
-    
-    # Create visualization for top/bottom 5 states in 2025
-    if not df3.empty:
-        # Separate top and bottom performers
-        top_performers = df3[df3['category'] == 'Top 5'].copy()
-        bottom_performers = df3[df3['category'] == 'Bottom 5'].copy()
-        
-        # Create side-by-side bar chart
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
-        
-        # Top performers chart
-        if not top_performers.empty:
-            bars1 = ax1.bar(top_performers['statename'], top_performers['avg_yearly_index'], color='#2E7D32')
-            ax1.set_title('Top 5 States by Housing Value (2025)', fontsize=14, fontweight='bold')
-            ax1.set_xlabel('State', fontsize=12)
-            ax1.set_ylabel('Average Housing Index', fontsize=12)
-            ax1.tick_params(axis='x', rotation=45)
-            
-            # Add value labels
-            for bar in bars1:
-                height = bar.get_height()
-                ax1.text(bar.get_x() + bar.get_width()/2., height + 1000,
-                        f'{height:,.0f}', ha='center', va='bottom', fontsize=10)
-        
-        # Bottom performers chart
-        if not bottom_performers.empty:
-            bars2 = ax2.bar(bottom_performers['statename'], bottom_performers['avg_yearly_index'], color='#D32F2F')
-            ax2.set_title('Bottom 5 States by Housing Value (2025)', fontsize=14, fontweight='bold')
-            ax2.set_xlabel('State', fontsize=12)
-            ax2.set_ylabel('Average Housing Index', fontsize=12)
-            ax2.tick_params(axis='x', rotation=45)
-            
-            # Add value labels
-            for bar in bars2:
-                height = bar.get_height()
-                ax2.text(bar.get_x() + bar.get_width()/2., height + 1000,
-                        f'{height:,.0f}', ha='center', va='bottom', fontsize=10)
-        
-        plt.tight_layout()
-        out = FIGS / "top_bottom_5_2025.png"
-        plt.savefig(out, dpi=200, bbox_inches="tight")
-        plt.close()
-        print(f"[ok] wrote {out}")
 
 def write_summary():
     """Generate reports/summary.txt from the computed CSV outputs."""
@@ -247,10 +174,6 @@ def write_summary():
         gap = pd.read_csv(REPORTS / "gap_analysis_2000_2025.csv")
     except FileNotFoundError:
         gap = pd.DataFrame()
-    try:
-        rankings = pd.read_csv(REPORTS / "consistent_rankings_analysis.csv")
-    except FileNotFoundError:
-        rankings = pd.DataFrame()
 
     # Compute findings with fallbacks
     highest_growth_line = "N/A"
@@ -267,20 +190,6 @@ def write_summary():
         if gap_2000 is not None and gap_2025 is not None:
             gap_verdict_line = f"{gap_trend} (2000: {gap_2000:,.2f} → 2025: {gap_2025:,.2f})"
 
-    # Analyze top/bottom 5 states in 2025
-    top_2025_line = "N/A"
-    bottom_2025_line = "N/A"
-    if not rankings.empty and {"category", "statename", "avg_yearly_index"}.issubset(rankings.columns):
-        top_2025 = rankings[rankings['category'] == 'Top 5']
-        bottom_2025 = rankings[rankings['category'] == 'Bottom 5']
-        
-        if not top_2025.empty:
-            top_state = top_2025.sort_values('avg_yearly_index', ascending=False).head(1).iloc[0]
-            top_2025_line = f"{top_state['statename']} (${top_state['avg_yearly_index']:,.0f})"
-        
-        if not bottom_2025.empty:
-            bottom_state = bottom_2025.sort_values('avg_yearly_index', ascending=True).head(1).iloc[0]
-            bottom_2025_line = f"{bottom_state['statename']} (${bottom_state['avg_yearly_index']:,.0f})"
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     out_path = REPORTS / "summary.txt"
@@ -289,8 +198,6 @@ def write_summary():
         f.write("==========================\n\n")
         f.write("- Highest growth since 2000: " + highest_growth_line + "\n")
         f.write("- Gap 2000 vs 2025: " + gap_verdict_line + "\n")
-        f.write("- Highest housing value 2025: " + top_2025_line + "\n")
-        f.write("- Lowest housing value 2025: " + bottom_2025_line + "\n")
     print(f"[ok] wrote {out_path}")
 
 def main():
