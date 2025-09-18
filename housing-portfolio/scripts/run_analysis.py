@@ -212,7 +212,6 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         avg_index_across_years,
         avg_rank
     FROM top5_consistency
-    ORDER BY years_in_top5 DESC, avg_rank ASC
     UNION ALL
     SELECT 
         'Bottom 5 Consistent' AS category,
@@ -221,7 +220,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         avg_index_across_years,
         avg_rank
     FROM bottom5_consistency
-    ORDER BY years_in_bottom5 DESC, avg_rank ASC;
+    ORDER BY category, years_in_top5 DESC, years_in_bottom5 DESC;
     """
     df3 = con.execute(q3).df()
     df_to_csv(df3, "consistent_rankings_analysis")
@@ -251,7 +250,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         
         # Bottom performers chart
         if not bottom_performers.empty:
-            bars2 = ax2.bar(bottom_performers['statename'], bottom_performers['years_in_bottom5'], color='#D32F2F')
+            bars2 = ax2.bar(bottom_performers['statename'], bottom_performers['years_in_top5'], color='#D32F2F')
             ax2.set_title('States Consistently in Bottom 5 (Years)', fontsize=14, fontweight='bold')
             ax2.set_xlabel('State', fontsize=12)
             ax2.set_ylabel('Years in Bottom 5', fontsize=12)
@@ -302,7 +301,7 @@ def write_summary():
     # Analyze consistent rankings
     top_consistent_line = "N/A"
     bottom_consistent_line = "N/A"
-    if not rankings.empty and {"category", "statename", "years_in_top5", "years_in_bottom5"}.issubset(rankings.columns):
+    if not rankings.empty and {"category", "statename", "years_in_top5"}.issubset(rankings.columns):
         top_consistent = rankings[rankings['category'] == 'Top 5 Consistent']
         bottom_consistent = rankings[rankings['category'] == 'Bottom 5 Consistent']
         
@@ -311,8 +310,8 @@ def write_summary():
             top_consistent_line = f"{top_state['statename']} ({int(top_state['years_in_top5'])} years in top 5)"
         
         if not bottom_consistent.empty:
-            bottom_state = bottom_consistent.sort_values('years_in_bottom5', ascending=False).head(1).iloc[0]
-            bottom_consistent_line = f"{bottom_state['statename']} ({int(bottom_state['years_in_bottom5'])} years in bottom 5)"
+            bottom_state = bottom_consistent.sort_values('years_in_top5', ascending=False).head(1).iloc[0]
+            bottom_consistent_line = f"{bottom_state['statename']} ({int(bottom_state['years_in_top5'])} years in bottom 5)"
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     out_path = REPORTS / "summary.txt"
