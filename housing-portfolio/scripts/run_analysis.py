@@ -91,9 +91,10 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         df1_sample = df1[df1['statename'].isin(top_states)]
         
         plt.figure(figsize=(14, 8))
-        for state in top_states:
+        colors = ['#2E7D32', '#1976D2', '#D32F2F', '#F57C00', '#7B1FA2', '#388E3C', '#303F9F', '#C2185B', '#FBC02D', '#5D4037']
+        for i, state in enumerate(top_states):
             state_data = df1_sample[df1_sample['statename'] == state]
-            plt.plot(state_data['year'], state_data['avg_yearly_index'], marker='o', label=state, linewidth=2)
+            plt.plot(state_data['year'], state_data['avg_yearly_index'], marker='o', label=state, linewidth=2, color=colors[i % len(colors)])
         
         plt.title('Home Value Index Trends: Top 10 States by Average Value', fontsize=14, fontweight='bold')
         plt.xlabel('Year', fontsize=12)
@@ -191,7 +192,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         df3 = df3.sort_values('pct_growth', ascending=True)
         
         plt.figure(figsize=(10, 6))
-        bars = plt.barh(df3['city_state'], df3['pct_growth'], color="#FF6B35", alpha=0.8, edgecolor='white', linewidth=1)
+        bars = plt.barh(df3['city_state'], df3['pct_growth'], color="#1976D2", alpha=0.8, edgecolor='white', linewidth=1)
         
         plt.title('Top 5 Cities with Highest Growth in Home Values (2000-2025)', fontsize=16, fontweight='bold', pad=20)
         plt.xlabel('Growth Percentage (%)', fontsize=12, fontweight='bold')
@@ -242,8 +243,8 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         x = range(len(states))
         width = 0.35
         
-        bars1 = plt.bar([i - width/2 for i in x], cities, width, label='Cities', color='#4CAF50', alpha=0.8, edgecolor='white', linewidth=1)
-        bars2 = plt.bar([i + width/2 for i in x], counties, width, label='Counties', color='#2196F3', alpha=0.8, edgecolor='white', linewidth=1)
+        bars1 = plt.bar([i - width/2 for i in x], cities, width, label='Cities', color='#2E7D32', alpha=0.8, edgecolor='white', linewidth=1)
+        bars2 = plt.bar([i + width/2 for i in x], counties, width, label='Counties', color='#1976D2', alpha=0.8, edgecolor='white', linewidth=1)
         
         plt.title('Top 10 States by Number of Cities and Counties Tracked', fontsize=16, fontweight='bold', pad=20)
         plt.xlabel('State', fontsize=12, fontweight='bold')
