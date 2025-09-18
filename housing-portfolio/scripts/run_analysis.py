@@ -145,41 +145,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         orientation="vertical",
     )
 
-    # 2) Hardest hit 2007 -> 2009
-    q2 = """
-    WITH state_year AS (
-      SELECT statename, year, AVG(yearlyindex) AS avg_index
-      FROM home_values_yearly_clean
-      WHERE yearlyindex IS NOT NULL AND year IN (2007, 2009)
-      GROUP BY 1,2
-    ),
-    crisis_base AS (
-      SELECT
-        statename,
-        MAX(CASE WHEN year = 2007 THEN avg_index END) AS idx_2007,
-        MAX(CASE WHEN year = 2009 THEN avg_index END) AS idx_2009
-      FROM state_year
-      GROUP BY 1
-    )
-    SELECT
-      statename,
-      ROUND(((idx_2009 - idx_2007) / idx_2007) * 100, 2) AS pct_change_07_09
-    FROM crisis_base
-    WHERE idx_2007 IS NOT NULL AND idx_2009 IS NOT NULL
-    ORDER BY pct_change_07_09 ASC;
-    """
-    df2 = con.execute(q2).df()
-    df_to_csv(df2, "hardest_hit_2007_2009")
-    df2_plot = df2.sort_values("pct_change_07_09").head(10)
-    plt.figure()
-    plt.bar(df2_plot["statename"], df2_plot["pct_change_07_09"])
-    plt.title("Hardest Hit 2007→2009 (% change), Worst 10")
-    plt.xticks(rotation=45, ha="right")
-    plt.tight_layout()
-    out = FIGS / "hardest_hit_2007_2009_worst10.png"
-    plt.savefig(out, dpi=160)
-    plt.close()
-    print(f"[ok] wrote {out}")
+    # 2) Hardest hit 2007 -> 2009 (removed by request)
 
     # 3) Volatility (std dev of YoY % changes)
     q3 = """
