@@ -72,3 +72,69 @@ SELECT
     END AS gap_trend
 FROM gap_analysis
 ORDER BY year;
+
+-- Q3. Which states consistently rank in the top 5 and bottom 5 
+-- in average housing values across the years?
+
+WITH state_values AS (
+    SELECT
+        statename,
+        year,
+        ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
+    FROM home_values_yearly_clean
+    GROUP BY statename, year
+),
+
+yearly_rankings AS (
+    SELECT
+        statename,
+        year,
+        avg_yearly_index,
+        ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index DESC) AS rank_desc,
+        ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index ASC) AS rank_asc
+    FROM state_values
+),
+
+top5_consistency AS (
+    SELECT
+        statename,
+        COUNT(*) AS years_in_top5,
+        ROUND(AVG(avg_yearly_index), 2) AS avg_index_across_years,
+        ROUND(AVG(rank_desc), 1) AS avg_rank
+    FROM yearly_rankings
+    WHERE rank_desc <= 5
+    GROUP BY statename
+    HAVING COUNT(*) >= 10  -- States that were in top 5 for at least 10 years
+),
+
+bottom5_consistency AS (
+    SELECT
+        statename,
+        COUNT(*) AS years_in_bottom5,
+        ROUND(AVG(avg_yearly_index), 2) AS avg_index_across_years,
+        ROUND(AVG(rank_asc), 1) AS avg_rank
+    FROM yearly_rankings
+    WHERE rank_asc <= 5
+    GROUP BY statename
+    HAVING COUNT(*) >= 10  -- States that were in bottom 5 for at least 10 years
+)
+
+SELECT 
+    'Top 5 Consistent' AS category,
+    statename,
+    years_in_top5,
+    avg_index_across_years,
+    avg_rank
+FROM top5_consistency
+ORDER BY years_in_top5 DESC, avg_rank ASC
+
+UNION ALL
+
+SELECT 
+    'Bottom 5 Consistent' AS category,
+    statename,
+    years_in_bottom5,
+    avg_index_across_years,
+    avg_rank
+FROM bottom5_consistency
+ORDER BY years_in_bottom5 DESC, avg_rank ASC;

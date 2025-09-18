@@ -163,6 +163,112 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.close()
         print(f"[ok] wrote {out}")
 
+    # Q3: Which states consistently rank in the top 5 and bottom 5 
+    # in average housing values across the years?
+    q3 = """
+    WITH state_values AS (
+        SELECT
+            statename,
+            year,
+            ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
+        FROM home_values_yearly_clean
+        GROUP BY statename, year
+    ),
+    yearly_rankings AS (
+        SELECT
+            statename,
+            year,
+            avg_yearly_index,
+            ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index DESC) AS rank_desc,
+            ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index ASC) AS rank_asc
+        FROM state_values
+    ),
+    top5_consistency AS (
+        SELECT
+            statename,
+            COUNT(*) AS years_in_top5,
+            ROUND(AVG(avg_yearly_index), 2) AS avg_index_across_years,
+            ROUND(AVG(rank_desc), 1) AS avg_rank
+        FROM yearly_rankings
+        WHERE rank_desc <= 5
+        GROUP BY statename
+        HAVING COUNT(*) >= 10
+    ),
+    bottom5_consistency AS (
+        SELECT
+            statename,
+            COUNT(*) AS years_in_bottom5,
+            ROUND(AVG(avg_yearly_index), 2) AS avg_index_across_years,
+            ROUND(AVG(rank_asc), 1) AS avg_rank
+        FROM yearly_rankings
+        WHERE rank_asc <= 5
+        GROUP BY statename
+        HAVING COUNT(*) >= 10
+    )
+    SELECT 
+        'Top 5 Consistent' AS category,
+        statename,
+        years_in_top5,
+        avg_index_across_years,
+        avg_rank
+    FROM top5_consistency
+    ORDER BY years_in_top5 DESC, avg_rank ASC
+    UNION ALL
+    SELECT 
+        'Bottom 5 Consistent' AS category,
+        statename,
+        years_in_bottom5,
+        avg_index_across_years,
+        avg_rank
+    FROM bottom5_consistency
+    ORDER BY years_in_bottom5 DESC, avg_rank ASC;
+    """
+    df3 = con.execute(q3).df()
+    df_to_csv(df3, "consistent_rankings_analysis")
+    
+    # Create visualization for consistent rankings
+    if not df3.empty:
+        # Separate top and bottom performers
+        top_performers = df3[df3['category'] == 'Top 5 Consistent'].copy()
+        bottom_performers = df3[df3['category'] == 'Bottom 5 Consistent'].copy()
+        
+        # Create side-by-side bar chart
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+        
+        # Top performers chart
+        if not top_performers.empty:
+            bars1 = ax1.bar(top_performers['statename'], top_performers['years_in_top5'], color='#2E7D32')
+            ax1.set_title('States Consistently in Top 5 (Years)', fontsize=14, fontweight='bold')
+            ax1.set_xlabel('State', fontsize=12)
+            ax1.set_ylabel('Years in Top 5', fontsize=12)
+            ax1.tick_params(axis='x', rotation=45)
+            
+            # Add value labels
+            for bar in bars1:
+                height = bar.get_height()
+                ax1.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                        f'{int(height)}', ha='center', va='bottom', fontsize=10)
+        
+        # Bottom performers chart
+        if not bottom_performers.empty:
+            bars2 = ax2.bar(bottom_performers['statename'], bottom_performers['years_in_bottom5'], color='#D32F2F')
+            ax2.set_title('States Consistently in Bottom 5 (Years)', fontsize=14, fontweight='bold')
+            ax2.set_xlabel('State', fontsize=12)
+            ax2.set_ylabel('Years in Bottom 5', fontsize=12)
+            ax2.tick_params(axis='x', rotation=45)
+            
+            # Add value labels
+            for bar in bars2:
+                height = bar.get_height()
+                ax2.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                        f'{int(height)}', ha='center', va='bottom', fontsize=10)
+        
+        plt.tight_layout()
+        out = FIGS / "consistent_rankings_analysis.png"
+        plt.savefig(out, dpi=200, bbox_inches="tight")
+        plt.close()
+        print(f"[ok] wrote {out}")
+
 def write_summary():
     """Generate reports/summary.txt from the computed CSV outputs."""
     try:
@@ -173,6 +279,10 @@ def write_summary():
         gap = pd.read_csv(REPORTS / "gap_analysis_2000_2025.csv")
     except FileNotFoundError:
         gap = pd.DataFrame()
+    try:
+        rankings = pd.read_csv(REPORTS / "consistent_rankings_analysis.csv")
+    except FileNotFoundError:
+        rankings = pd.DataFrame()
 
     # Compute findings with fallbacks
     highest_growth_line = "N/A"
@@ -189,6 +299,21 @@ def write_summary():
         if gap_2000 is not None and gap_2025 is not None:
             gap_verdict_line = f"{gap_trend} (2000: {gap_2000:,.2f} → 2025: {gap_2025:,.2f})"
 
+    # Analyze consistent rankings
+    top_consistent_line = "N/A"
+    bottom_consistent_line = "N/A"
+    if not rankings.empty and {"category", "statename", "years_in_top5", "years_in_bottom5"}.issubset(rankings.columns):
+        top_consistent = rankings[rankings['category'] == 'Top 5 Consistent']
+        bottom_consistent = rankings[rankings['category'] == 'Bottom 5 Consistent']
+        
+        if not top_consistent.empty:
+            top_state = top_consistent.sort_values('years_in_top5', ascending=False).head(1).iloc[0]
+            top_consistent_line = f"{top_state['statename']} ({int(top_state['years_in_top5'])} years in top 5)"
+        
+        if not bottom_consistent.empty:
+            bottom_state = bottom_consistent.sort_values('years_in_bottom5', ascending=False).head(1).iloc[0]
+            bottom_consistent_line = f"{bottom_state['statename']} ({int(bottom_state['years_in_bottom5'])} years in bottom 5)"
+
     REPORTS.mkdir(parents=True, exist_ok=True)
     out_path = REPORTS / "summary.txt"
     with open(out_path, "w", encoding="utf-8") as f:
@@ -196,6 +321,8 @@ def write_summary():
         f.write("==========================\n\n")
         f.write("- Highest growth since 2000: " + highest_growth_line + "\n")
         f.write("- Gap 2000 vs 2025: " + gap_verdict_line + "\n")
+        f.write("- Most consistent top performer: " + top_consistent_line + "\n")
+        f.write("- Most consistent bottom performer: " + bottom_consistent_line + "\n")
     print(f"[ok] wrote {out_path}")
 
 def main():
