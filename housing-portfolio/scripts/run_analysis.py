@@ -136,6 +136,54 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     df2 = con.execute(q2).df()
     df_to_csv(df2, "highest_growth_2000_2025")
     bar_chart(df2, "statename", "pct_growth", "Top 5 States with Highest Growth in Home Values (2000-2025)", "highest_growth_top5")
+    
+    # Q3: Which top 5 cities have shown the highest growth in home value index from 2000 to 2025?
+    q3 = """
+    WITH city_values AS (
+        SELECT
+            city,
+            statename,
+            year,
+            ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
+        FROM home_values_yearly_clean
+        WHERE yearlyindex IS NOT NULL
+        GROUP BY city, statename, year
+    ),
+    city_2000 AS (
+        SELECT
+            city,
+            statename,
+            avg_yearly_index AS value_2000
+        FROM city_values
+        WHERE year = 2000
+    ),
+    city_2025 AS (
+        SELECT
+            city,
+            statename,
+            avg_yearly_index AS value_2025
+        FROM city_values
+        WHERE year = 2025
+    )
+    SELECT
+        c2000.city,
+        c2000.statename,
+        c2000.value_2000,
+        c2025.value_2025,
+        ROUND(((c2025.value_2025 - c2000.value_2000) / c2000.value_2000) * 100, 2) AS pct_growth
+    FROM city_2000 c2000
+    JOIN city_2025 c2025 ON c2000.city = c2025.city AND c2000.statename = c2025.statename
+    ORDER BY pct_growth DESC
+    LIMIT 5;
+    """
+    df3 = con.execute(q3).df()
+    df_to_csv(df3, "highest_growth_cities_2000_2025")
+    
+    # Create a bar chart for Q3 with city names
+    if not df3.empty:
+        # Create a combined city-state label for better readability
+        df3['city_state'] = df3['city'] + ', ' + df3['statename']
+        bar_chart(df3, "city_state", "pct_growth", "Top 5 Cities with Highest Growth in Home Values (2000-2025)", "highest_growth_cities_top5")
 
 
 def write_summary():
@@ -148,6 +196,10 @@ def write_summary():
         growth = pd.read_csv(REPORTS / "highest_growth_2000_2025.csv")
     except FileNotFoundError:
         growth = pd.DataFrame()
+    try:
+        city_growth = pd.read_csv(REPORTS / "highest_growth_cities_2000_2025.csv")
+    except FileNotFoundError:
+        city_growth = pd.DataFrame()
 
     # Compute findings with fallbacks
     yearly_stats_line = "N/A"
@@ -160,6 +212,11 @@ def write_summary():
     if not growth.empty and {"statename", "pct_growth"}.issubset(growth.columns):
         top_growth = growth.sort_values("pct_growth", ascending=False).head(1).iloc[0]
         highest_growth_line = f"{top_growth['statename']} ({top_growth['pct_growth']:.2f}% growth)"
+    
+    highest_city_growth_line = "N/A"
+    if not city_growth.empty and {"city", "statename", "pct_growth"}.issubset(city_growth.columns):
+        top_city_growth = city_growth.sort_values("pct_growth", ascending=False).head(1).iloc[0]
+        highest_city_growth_line = f"{top_city_growth['city']}, {top_city_growth['statename']} ({top_city_growth['pct_growth']:.2f}% growth)"
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     out_path = REPORTS / "summary.txt"
@@ -167,7 +224,8 @@ def write_summary():
         f.write("Housing Portfolio Summary\n")
         f.write("==========================\n\n")
         f.write("- Dataset coverage: " + yearly_stats_line + "\n")
-        f.write("- Highest growth 2000-2025: " + highest_growth_line + "\n")
+        f.write("- Highest state growth 2000-2025: " + highest_growth_line + "\n")
+        f.write("- Highest city growth 2000-2025: " + highest_city_growth_line + "\n")
     print(f"[ok] wrote {out_path}")
 
 def main():
