@@ -179,11 +179,35 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     df3 = con.execute(q3).df()
     df_to_csv(df3, "q3_top5_cities_highest_growth_2000_2025")
     
-    # Create a bar chart for Q3 with city names
+    # Create a horizontal bar chart for Q3 with city names (different from states)
     if not df3.empty:
         # Create a combined city-state label for better readability
         df3['city_state'] = df3['city'] + ', ' + df3['statename']
-        bar_chart(df3, "city_state", "pct_growth", "Top 5 Cities with Highest Growth in Home Values (2000-2025)", "q3_top5_cities_highest_growth")
+        
+        # Sort with highest values at the top
+        df3 = df3.sort_values('pct_growth', ascending=True)
+        
+        plt.figure(figsize=(12, 8))
+        bars = plt.barh(df3['city_state'], df3['pct_growth'], color="#FF6B35")  # Orange color for cities
+        
+        plt.title('Top 5 Cities with Highest Growth in Home Values (2000-2025)', fontsize=14, fontweight='bold')
+        plt.xlabel('Growth Percentage (%)', fontsize=12)
+        plt.ylabel('City, State', fontsize=12)
+        
+        # Add value labels on the right side of bars
+        for i, bar in enumerate(bars):
+            width = bar.get_width()
+            plt.text(width + 1, bar.get_y() + bar.get_height()/2,
+                    f'{width:.1f}%', ha='left', va='center', fontsize=10, fontweight='bold')
+        
+        # Add grid for better readability
+        plt.grid(axis='x', alpha=0.3, linestyle='--')
+        plt.tight_layout()
+        
+        out = FIGS / "q3_top5_cities_highest_growth.png"
+        plt.savefig(out, dpi=200, bbox_inches="tight")
+        plt.close()
+        print(f"[ok] wrote {out}")
 
 
 def write_summary():
