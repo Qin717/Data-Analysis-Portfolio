@@ -10,6 +10,7 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 
 REPO = Path(__file__).resolve().parents[1]
 DATA = REPO / "data"
@@ -40,16 +41,45 @@ def df_to_csv(df: pd.DataFrame, name: str):
     print(f"[ok] wrote {out}")
 
 def bar_chart(df: pd.DataFrame, x: str, y: str, title: str, filename: str, top_n: int = 10):
-    if top_n and len(df) > top_n:
-        df = df.sort_values(y, ascending=False).head(top_n)
-    plt.figure()
-    plt.bar(df[x], df[y])
-    plt.title(title)
-    plt.xticks(rotation=45, ha="right")
-    plt.tight_layout()
+    # Sort, take Top-N, and reverse for horizontal barh (largest at top)
+    df_plot = df.sort_values(y, ascending=False).head(top_n).iloc[::-1]
+
+    # Use a clean, professional style
+    plt.style.use("seaborn-v0_8-whitegrid")
+    fig, ax = plt.subplots(figsize=(11, 7), dpi=160)
+
+    bars = ax.barh(df_plot[x], df_plot[y], color="#2E7D32")
+    ax.set_title(title, fontsize=16, fontweight="bold")
+    ax.set_ylabel("State", fontsize=12)
+    ax.set_yticklabels(df_plot[x], fontsize=11)
+
+    # If y looks like a percent metric, format axis and labels accordingly
+    is_percent = ("pct" in y.lower()) or ("%" in title)
+    if is_percent:
+        ax.xaxis.set_major_formatter(mtick.PercentFormatter(xmax=100))
+        value_fmt = lambda v: f"{v:.1f}%"
+        ax.set_xlabel("Percent", fontsize=11)
+    else:
+        value_fmt = lambda v: f"{v:,.2f}"
+
+    # Subtle gridlines
+    ax.grid(axis="x", linestyle="--", alpha=0.3)
+    ax.grid(False, axis="y")
+
+    # Annotate values at bar ends
+    for bar in bars:
+        width = bar.get_width()
+        ax.text(width + (max(df_plot[y]) * 0.01),
+                bar.get_y() + bar.get_height() / 2,
+                value_fmt(width),
+                va="center", ha="left", fontsize=10, color="#333333")
+
+    # Ensure enough left margin for long state names
+    fig.tight_layout()
+    fig.subplots_adjust(left=0.28)
     out = FIGS / f"{filename}.png"
-    plt.savefig(out, dpi=160)
-    plt.close()
+    fig.savefig(out, dpi=200, bbox_inches="tight")
+    plt.close(fig)
     print(f"[ok] wrote {out}")
 
 def run_queries(con: duckdb.DuckDBPyConnection):
