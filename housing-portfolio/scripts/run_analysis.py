@@ -80,6 +80,30 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     df1 = con.execute(q1).df()
     df_to_csv(df1, "yearly_average_by_state")
     
+    # Create a line chart for Q1 showing trends over time
+    if not df1.empty:
+        # Get a sample of states for the chart (top 10 by average value)
+        state_avg = df1.groupby('statename')['avg_yearly_index'].mean().sort_values(ascending=False)
+        top_states = state_avg.head(10).index.tolist()
+        df1_sample = df1[df1['statename'].isin(top_states)]
+        
+        plt.figure(figsize=(14, 8))
+        for state in top_states:
+            state_data = df1_sample[df1_sample['statename'] == state]
+            plt.plot(state_data['year'], state_data['avg_yearly_index'], marker='o', label=state, linewidth=2)
+        
+        plt.title('Home Value Index Trends: Top 10 States by Average Value', fontsize=14, fontweight='bold')
+        plt.xlabel('Year', fontsize=12)
+        plt.ylabel('Average Home Value Index', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        out = FIGS / "yearly_trends_top10.png"
+        plt.savefig(out, dpi=200, bbox_inches="tight")
+        plt.close()
+        print(f"[ok] wrote {out}")
+    
     # Q2: Which 5 states have shown the highest growth in home values index from 2000 to 2025?
     q2 = """
     WITH state_values AS (
