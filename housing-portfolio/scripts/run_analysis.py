@@ -66,101 +66,40 @@ def bar_chart(df: pd.DataFrame, x: str, y: str, title: str, filename: str, top_n
     print(f"[ok] wrote {out}")
 
 def run_queries(con: duckdb.DuckDBPyConnection):
-    # 1) Fastest growth since 2000
+    # Q1: Which states have experienced the fastest and slowest growth 
+    # in housing values since 2000?
     q1 = """
-    WITH state_year AS (
-      SELECT statename, year, AVG(yearlyindex) AS avg_index
-      FROM home_values_yearly_clean
-      WHERE yearlyindex IS NOT NULL
-      GROUP BY 1,2
+    WITH state_values AS (
+        SELECT
+            statename,
+            year,
+            ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
+        FROM home_values_yearly_clean
+        GROUP BY statename, year
     ),
-    growth_base AS (
-      SELECT
-        statename,
-        MAX(CASE WHEN year = 2000 THEN avg_index END) AS idx_2000,
-        MAX(CASE WHEN year = 2025 THEN avg_index END) AS idx_2025
-      FROM state_year
-      GROUP BY 1
+    growth_calc AS (
+        SELECT
+            statename,
+            MIN(CASE WHEN year = 2000 THEN avg_yearly_index END) AS value_2000,
+            MAX(CASE WHEN year = 2025 THEN avg_yearly_index END) AS value_2025
+        FROM state_values
+        GROUP BY statename
     )
     SELECT
-      statename,
-      ROUND(idx_2000, 2) AS idx_2000,
-      ROUND(idx_2025, 2) AS idx_2025,
-      ROUND(((idx_2025 - idx_2000) / idx_2000) * 100, 2) AS pct_growth
-    FROM growth_base
-    WHERE idx_2000 IS NOT NULL AND idx_2025 IS NOT NULL
+        statename,
+        value_2000,
+        value_2025,
+        ROUND(((value_2025 - value_2000) / value_2000) * 100, 2) AS pct_growth
+    FROM growth_calc
+    WHERE value_2000 IS NOT NULL AND value_2025 IS NOT NULL
     ORDER BY pct_growth DESC;
     """
     df1 = con.execute(q1).df()
     df_to_csv(df1, "fastest_growth_since_2000")
     bar_chart(df1, "statename", "pct_growth", "Home Value Index Fastest Growth Since 2000 (Top 10)", "fastest_growth_top10")
 
-    # 2) Hardest hit 2007 -> 2009
-    q2 = """
-    WITH state_year AS (
-      SELECT statename, year, AVG(yearlyindex) AS avg_index
-      FROM home_values_yearly_clean
-      WHERE yearlyindex IS NOT NULL AND year IN (2007, 2009)
-      GROUP BY 1,2
-    ),
-    crisis_base AS (
-      SELECT
-        statename,
-        MAX(CASE WHEN year = 2007 THEN avg_index END) AS idx_2007,
-        MAX(CASE WHEN year = 2009 THEN avg_index END) AS idx_2009
-      FROM state_year
-      GROUP BY 1
-    )
-    SELECT
-      statename,
-      ROUND(((idx_2009 - idx_2007) / idx_2007) * 100, 2) AS pct_change_07_09
-    FROM crisis_base
-    WHERE idx_2007 IS NOT NULL AND idx_2009 IS NOT NULL
-    ORDER BY pct_change_07_09 ASC;
-    """
-    df2 = con.execute(q2).df()
-    df_to_csv(df2, "hardest_hit_2007_2009")
-    df2_plot = df2.sort_values("pct_change_07_09").head(10)
-    plt.figure()
-    plt.bar(df2_plot["statename"], df2_plot["pct_change_07_09"])
-    plt.title("Hardest Hit 2007→2009 (% change), Worst 10")
-    plt.xticks(rotation=45, ha="right")
-    plt.tight_layout()
-    out = FIGS / "hardest_hit_2007_2009_worst10.png"
-    plt.savefig(out, dpi=160)
-    plt.close()
-    print(f"[ok] wrote {out}")
-
-    # 3) Volatility (std dev of YoY % changes)
-    q3 = """
-    WITH state_year AS (
-      SELECT statename, year, AVG(yearlyindex) AS avg_index
-      FROM home_values_yearly_clean
-      WHERE yearlyindex IS NOT NULL
-      GROUP BY 1,2
-    ),
-    yoy AS (
-      SELECT
-        curr.statename,
-        curr.year,
-        (curr.avg_index - prev.avg_index) / NULLIF(prev.avg_index, 0) AS yoy_pct
-      FROM state_year curr
-      JOIN state_year prev
-        ON curr.statename = prev.statename AND curr.year = prev.year + 1
-      WHERE prev.avg_index IS NOT NULL
-    )
-    SELECT
-      statename,
-      ROUND(STDDEV_SAMP(yoy_pct) * 100, 2) AS yoy_volatility_pct
-    FROM yoy
-    GROUP BY 1
-    ORDER BY yoy_volatility_pct DESC;
-    """
-    df3 = con.execute(q3).df()
-    df_to_csv(df3, "volatility_by_state")
-    bar_chart(df3, "statename", "yoy_volatility_pct", "YoY Volatility by State (%), Top 10", "volatility_top10")
-
-    # 4) Gap analysis between most/least expensive states 2000 vs 2025
+    # Q2: Has the gap between the most expensive and least expensive states 
+    # widened from 2000 to 2025?
     q4 = """
     WITH state_values AS (
         SELECT
@@ -199,14 +138,14 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     FROM gap_analysis
     ORDER BY year;
     """
-    df4 = con.execute(q4).df()
-    df_to_csv(df4, "gap_analysis_2000_2025")
+    df2 = con.execute(q4).df()
+    df_to_csv(df2, "gap_analysis_2000_2025")
     
     # Create a simple comparison chart for the gap
-    if len(df4) >= 2:
+    if len(df2) >= 2:
         plt.figure(figsize=(10, 6))
-        years = df4['year'].astype(str)
-        gaps = df4['gap']
+        years = df2['year'].astype(str)
+        gaps = df2['gap']
         
         bars = plt.bar(years, gaps, color=['#1f77b4', '#ff7f0e'])
         plt.title('Gap Between Most and Least Expensive States: 2000 vs 2025', fontsize=14, fontweight='bold')
@@ -231,14 +170,6 @@ def write_summary():
     except FileNotFoundError:
         growth = pd.DataFrame()
     try:
-        crisis = pd.read_csv(REPORTS / "hardest_hit_2007_2009.csv")
-    except FileNotFoundError:
-        crisis = pd.DataFrame()
-    try:
-        vol = pd.read_csv(REPORTS / "volatility_by_state.csv")
-    except FileNotFoundError:
-        vol = pd.DataFrame()
-    try:
         gap = pd.read_csv(REPORTS / "gap_analysis_2000_2025.csv")
     except FileNotFoundError:
         gap = pd.DataFrame()
@@ -249,15 +180,6 @@ def write_summary():
         top_growth = growth.sort_values("pct_growth", ascending=False).head(1).iloc[0]
         highest_growth_line = f"{top_growth['statename']} ({top_growth['pct_growth']:.2f}% since 2000)"
 
-    hardest_hit_line = "N/A"
-    if not crisis.empty and {"statename", "pct_change_07_09"}.issubset(crisis.columns):
-        worst = crisis.sort_values("pct_change_07_09", ascending=True).head(1).iloc[0]
-        hardest_hit_line = f"{worst['statename']} ({worst['pct_change_07_09']:.2f}% from 2007 to 2009)"
-
-    most_volatile_line = "N/A"
-    if not vol.empty and {"statename", "yoy_volatility_pct"}.issubset(vol.columns):
-        mv = vol.sort_values("yoy_volatility_pct", ascending=False).head(1).iloc[0]
-        most_volatile_line = f"{mv['statename']} ({mv['yoy_volatility_pct']:.2f}% YoY volatility)"
 
     gap_verdict_line = "N/A"
     if not gap.empty and {"year", "gap", "gap_trend"}.issubset(gap.columns) and len(gap) >= 2:
@@ -273,8 +195,6 @@ def write_summary():
         f.write("Housing Portfolio Summary\n")
         f.write("==========================\n\n")
         f.write("- Highest growth since 2000: " + highest_growth_line + "\n")
-        f.write("- Hardest hit in 2007–2009: " + hardest_hit_line + "\n")
-        f.write("- Most volatile state: " + most_volatile_line + "\n")
         f.write("- Gap 2000 vs 2025: " + gap_verdict_line + "\n")
     print(f"[ok] wrote {out_path}")
 
