@@ -1,12 +1,11 @@
 category,statename,years_in_top5,avg_index_across_years,avg_rank
-Bottom 5 Consistent,WV,26,114578.32,2.6
-Bottom 5 Consistent,OK,26,113153.23,1.9
-Bottom 5 Consistent,KY,26,116527.81,2.6
-Bottom 5 Consistent,MS,18,126373.73,3.2
-Bottom 5 Consistent,AR,13,121363.15,4.5
-Bottom 5 Consistent,IN,10,111922.43,4.2
 Top 5 Consistent,HI,26,548284.42,1.6
 Top 5 Consistent,CA,26,533812.5,1.9
 Top 5 Consistent,DC,25,491526.4,3.1
 Top 5 Consistent,MA,24,422082.37,3.8
 Top 5 Consistent,NJ,24,391186.07,4.4
+Bottom 5 Consistent,OK,26,113153.23,1.9
+Bottom 5 Consistent,KY,26,116527.81,2.6
+Bottom 5 Consistent,WV,26,114578.32,2.6
+Bottom 5 Consistent,MS,18,126373.73,3.2
+Bottom 5 Consistent,AR,13,121363.15,4.5

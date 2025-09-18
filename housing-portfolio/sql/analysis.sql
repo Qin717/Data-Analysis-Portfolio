@@ -73,8 +73,9 @@ SELECT
 FROM gap_analysis
 ORDER BY year;
 
--- Q3. Which states consistently rank in the top 5 and bottom 5 
--- in average housing values across the years?
+-- Q3. Which are the top 5 most consistent states that ranked in the top 5 
+-- and bottom 5 most consistent states that ranked in the bottom 5 
+-- in average housing values across the years (minimum 10 years)?
 
 WITH state_values AS (
     SELECT
@@ -104,7 +105,7 @@ top5_consistency AS (
     FROM yearly_rankings
     WHERE rank_desc <= 5
     GROUP BY statename
-    HAVING COUNT(*) >= 10  -- States that were in top 5 for at least 10 years
+    HAVING COUNT(*) >= 10
 ),
 
 bottom5_consistency AS (
@@ -116,7 +117,7 @@ bottom5_consistency AS (
     FROM yearly_rankings
     WHERE rank_asc <= 5
     GROUP BY statename
-    HAVING COUNT(*) >= 10  -- States that were in bottom 5 for at least 10 years
+    HAVING COUNT(*) >= 10
 )
 
 SELECT 
@@ -127,6 +128,7 @@ SELECT
     avg_rank
 FROM top5_consistency
 ORDER BY years_in_top5 DESC, avg_rank ASC
+LIMIT 5
 
 UNION ALL
 
@@ -137,4 +139,5 @@ SELECT
     avg_index_across_years,
     avg_rank
 FROM bottom5_consistency
-ORDER BY years_in_bottom5 DESC, avg_rank ASC;
+ORDER BY years_in_bottom5 DESC, avg_rank ASC
+LIMIT 5;

@@ -163,8 +163,9 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.close()
         print(f"[ok] wrote {out}")
 
-    # Q3: Which states consistently rank in the top 5 and bottom 5 
-    # in average housing values across the years?
+    # Q3: Which are the top 5 most consistent states that ranked in the top 5 
+    # and bottom 5 most consistent states that ranked in the bottom 5 
+    # in average housing values across the years (minimum 10 years)?
     q3 = """
     WITH state_values AS (
         SELECT
@@ -205,22 +206,25 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         GROUP BY statename
         HAVING COUNT(*) >= 10
     )
-    SELECT 
+    (SELECT 
         'Top 5 Consistent' AS category,
         statename,
         years_in_top5,
         avg_index_across_years,
         avg_rank
     FROM top5_consistency
+    ORDER BY years_in_top5 DESC, avg_rank ASC
+    LIMIT 5)
     UNION ALL
-    SELECT 
+    (SELECT 
         'Bottom 5 Consistent' AS category,
         statename,
         years_in_bottom5,
         avg_index_across_years,
         avg_rank
     FROM bottom5_consistency
-    ORDER BY category, years_in_top5 DESC, years_in_bottom5 DESC;
+    ORDER BY years_in_bottom5 DESC, avg_rank ASC
+    LIMIT 5);
     """
     df3 = con.execute(q3).df()
     df_to_csv(df3, "consistent_rankings_analysis")
