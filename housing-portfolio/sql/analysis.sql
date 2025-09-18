@@ -5,6 +5,9 @@ SELECT
     year,
     ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
 FROM home_values_yearly_clean
+WHERE statename IS NOT NULL 
+    AND year IS NOT NULL 
+    AND yearlyindex IS NOT NULL
 GROUP BY statename, year
 ORDER BY statename, year;
 
@@ -17,6 +20,9 @@ WITH state_values AS (
         year,
         ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
     FROM home_values_yearly_clean
+    WHERE statename IS NOT NULL 
+        AND year IS NOT NULL 
+        AND yearlyindex IS NOT NULL
     GROUP BY statename, year
 ),
 
@@ -50,6 +56,9 @@ WITH state_values AS (
         year,
         ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
     FROM home_values_yearly_clean
+    WHERE statename IS NOT NULL 
+        AND year IS NOT NULL 
+        AND yearlyindex IS NOT NULL
     GROUP BY statename, year
 ),
 
