@@ -2,3 +2,4 @@ Housing Portfolio Summary
 ==========================
 
 - Dataset coverage: 51 states, 2000-2025 period
+- Highest growth 2000-2025: ID (348.08% growth)
