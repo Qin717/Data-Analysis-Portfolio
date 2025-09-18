@@ -79,6 +79,39 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     """
     df1 = con.execute(q1).df()
     df_to_csv(df1, "yearly_average_by_state")
+    
+    # Q2: Which 5 states have shown the highest growth in home values index from 2000 to 2025?
+    q2 = """
+    WITH state_values AS (
+        SELECT
+            statename,
+            year,
+            ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
+        FROM home_values_yearly_clean
+        WHERE yearlyindex IS NOT NULL
+        GROUP BY statename, year
+    ),
+    growth_calc AS (
+        SELECT
+            statename,
+            MIN(CASE WHEN year = 2000 THEN avg_yearly_index END) AS value_2000,
+            MAX(CASE WHEN year = 2025 THEN avg_yearly_index END) AS value_2025
+        FROM state_values
+        GROUP BY statename
+    )
+    SELECT
+        statename,
+        value_2000,
+        value_2025,
+        ROUND(((value_2025 - value_2000) / value_2000) * 100, 2) AS pct_growth
+    FROM growth_calc
+    WHERE value_2000 IS NOT NULL AND value_2025 IS NOT NULL
+    ORDER BY pct_growth DESC
+    LIMIT 5;
+    """
+    df2 = con.execute(q2).df()
+    df_to_csv(df2, "highest_growth_2000_2025")
+    bar_chart(df2, "statename", "pct_growth", "Top 5 States with Highest Growth in Home Values (2000-2025)", "highest_growth_top5")
 
 
 def write_summary():
@@ -87,6 +120,10 @@ def write_summary():
         yearly_avg = pd.read_csv(REPORTS / "yearly_average_by_state.csv")
     except FileNotFoundError:
         yearly_avg = pd.DataFrame()
+    try:
+        growth = pd.read_csv(REPORTS / "highest_growth_2000_2025.csv")
+    except FileNotFoundError:
+        growth = pd.DataFrame()
 
     # Compute findings with fallbacks
     yearly_stats_line = "N/A"
@@ -94,6 +131,11 @@ def write_summary():
         total_states = yearly_avg['statename'].nunique()
         year_range = f"{yearly_avg['year'].min()}-{yearly_avg['year'].max()}"
         yearly_stats_line = f"{total_states} states, {year_range} period"
+    
+    highest_growth_line = "N/A"
+    if not growth.empty and {"statename", "pct_growth"}.issubset(growth.columns):
+        top_growth = growth.sort_values("pct_growth", ascending=False).head(1).iloc[0]
+        highest_growth_line = f"{top_growth['statename']} ({top_growth['pct_growth']:.2f}% growth)"
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     out_path = REPORTS / "summary.txt"
@@ -101,6 +143,7 @@ def write_summary():
         f.write("Housing Portfolio Summary\n")
         f.write("==========================\n\n")
         f.write("- Dataset coverage: " + yearly_stats_line + "\n")
+        f.write("- Highest growth 2000-2025: " + highest_growth_line + "\n")
     print(f"[ok] wrote {out_path}")
 
 def main():
