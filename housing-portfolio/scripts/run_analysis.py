@@ -66,9 +66,22 @@ def bar_chart(df: pd.DataFrame, x: str, y: str, title: str, filename: str, top_n
     print(f"[ok] wrote {out}")
 
 def run_queries(con: duckdb.DuckDBPyConnection):
-    # Q1: Which states have experienced the fastest and slowest growth 
-    # in housing values since 2000?
+    # Q1: Calculate the yearly average home value index for each state
     q1 = """
+    SELECT
+        statename,
+        year,
+        ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
+    FROM home_values_yearly_clean
+    GROUP BY statename, year
+    ORDER BY statename, year;
+    """
+    df1 = con.execute(q1).df()
+    df_to_csv(df1, "yearly_average_by_state")
+    
+    # Q2: Which states have experienced the fastest and slowest growth 
+    # in housing values since 2000?
+    q2 = """
     WITH state_values AS (
         SELECT
             statename,
@@ -94,13 +107,13 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     WHERE value_2000 IS NOT NULL AND value_2025 IS NOT NULL
     ORDER BY pct_growth DESC;
     """
-    df1 = con.execute(q1).df()
-    df_to_csv(df1, "fastest_growth_since_2000")
-    bar_chart(df1, "statename", "pct_growth", "Home Value Index Fastest Growth Since 2000 (Top 10)", "fastest_growth_top10")
+    df2 = con.execute(q2).df()
+    df_to_csv(df2, "fastest_growth_since_2000")
+    bar_chart(df2, "statename", "pct_growth", "Home Value Index Fastest Growth Since 2000 (Top 10)", "fastest_growth_top10")
 
-    # Q2: Has the gap between the most expensive and least expensive states 
+    # Q3: Has the gap between the most expensive and least expensive states 
     # widened from 2000 to 2025?
-    q4 = """
+    q3 = """
     WITH state_values AS (
         SELECT
             statename,
@@ -138,14 +151,14 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     FROM gap_analysis
     ORDER BY year;
     """
-    df2 = con.execute(q4).df()
-    df_to_csv(df2, "gap_analysis_2000_2025")
+    df3 = con.execute(q3).df()
+    df_to_csv(df3, "gap_analysis_2000_2025")
     
     # Create a simple comparison chart for the gap
-    if len(df2) >= 2:
+    if len(df3) >= 2:
         plt.figure(figsize=(10, 6))
-        years = df2['year'].astype(str)
-        gaps = df2['gap']
+        years = df3['year'].astype(str)
+        gaps = df3['gap']
         
         bars = plt.bar(years, gaps, color=['#1f77b4', '#ff7f0e'])
         plt.title('Gap Between Most and Least Expensive States: 2000 vs 2025', fontsize=14, fontweight='bold')
@@ -167,6 +180,10 @@ def run_queries(con: duckdb.DuckDBPyConnection):
 def write_summary():
     """Generate reports/summary.txt from the computed CSV outputs."""
     try:
+        yearly_avg = pd.read_csv(REPORTS / "yearly_average_by_state.csv")
+    except FileNotFoundError:
+        yearly_avg = pd.DataFrame()
+    try:
         growth = pd.read_csv(REPORTS / "fastest_growth_since_2000.csv")
     except FileNotFoundError:
         growth = pd.DataFrame()
@@ -176,6 +193,12 @@ def write_summary():
         gap = pd.DataFrame()
 
     # Compute findings with fallbacks
+    yearly_stats_line = "N/A"
+    if not yearly_avg.empty and {"statename", "year", "avg_yearly_index"}.issubset(yearly_avg.columns):
+        total_states = yearly_avg['statename'].nunique()
+        year_range = f"{yearly_avg['year'].min()}-{yearly_avg['year'].max()}"
+        yearly_stats_line = f"{total_states} states, {year_range} period"
+    
     highest_growth_line = "N/A"
     if not growth.empty and {"statename", "pct_growth"}.issubset(growth.columns):
         top_growth = growth.sort_values("pct_growth", ascending=False).head(1).iloc[0]
@@ -196,6 +219,7 @@ def write_summary():
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("Housing Portfolio Summary\n")
         f.write("==========================\n\n")
+        f.write("- Dataset coverage: " + yearly_stats_line + "\n")
         f.write("- Highest growth since 2000: " + highest_growth_line + "\n")
         f.write("- Gap 2000 vs 2025: " + gap_verdict_line + "\n")
     print(f"[ok] wrote {out_path}")

@@ -1,4 +1,14 @@
--- Q1. Which states have experienced the fastest and slowest growth 
+-- Q1. Calculate the yearly average home value index for each state
+
+SELECT
+    statename,
+    year,
+    ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
+FROM home_values_yearly_clean
+GROUP BY statename, year
+ORDER BY statename, year;
+
+-- Q2. Which states have experienced the fastest and slowest growth 
 -- in housing values since 2000?
 
 WITH state_values AS (
@@ -31,7 +41,7 @@ LIMIT 5;  -- top 5 fastest growing states
 
 -- To find the slowest, rerun with ORDER BY pct_growth ASC LIMIT 5
 
--- Q2. Has the gap between the most expensive and least expensive states 
+-- Q3. Has the gap between the most expensive and least expensive states 
 -- widened from 2000 to 2025?
 
 WITH state_values AS (
