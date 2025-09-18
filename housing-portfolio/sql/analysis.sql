@@ -77,67 +77,44 @@ ORDER BY year;
 -- and bottom 5 most consistent states that ranked in the bottom 5 
 -- in average housing values across the years (minimum 10 years)?
 
-WITH state_values AS (
+-- Step 1: Get yearly rankings for each state
+WITH yearly_rankings AS (
     SELECT
         statename,
         year,
-        ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
+        ROUND(AVG(yearlyindex), 2) AS avg_index,
+        ROW_NUMBER() OVER (PARTITION BY year ORDER BY AVG(yearlyindex) DESC) AS rank_high,
+        ROW_NUMBER() OVER (PARTITION BY year ORDER BY AVG(yearlyindex) ASC) AS rank_low
     FROM home_values_yearly_clean
     GROUP BY statename, year
 ),
 
-yearly_rankings AS (
+-- Step 2: Count years in top 5 and bottom 5
+consistency_counts AS (
     SELECT
         statename,
-        year,
-        avg_yearly_index,
-        ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index DESC) AS rank_desc,
-        ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index ASC) AS rank_asc
-    FROM state_values
-),
-
-top5_consistency AS (
-    SELECT
-        statename,
-        COUNT(*) AS years_in_top5,
-        ROUND(AVG(avg_yearly_index), 2) AS avg_index_across_years,
-        ROUND(AVG(rank_desc), 1) AS avg_rank
+        SUM(CASE WHEN rank_high <= 5 THEN 1 ELSE 0 END) AS years_top5,
+        SUM(CASE WHEN rank_low <= 5 THEN 1 ELSE 0 END) AS years_bottom5,
+        ROUND(AVG(avg_index), 2) AS avg_index_overall,
+        ROUND(AVG(rank_high), 1) AS avg_rank_high,
+        ROUND(AVG(rank_low), 1) AS avg_rank_low
     FROM yearly_rankings
-    WHERE rank_desc <= 5
     GROUP BY statename
-    HAVING COUNT(*) >= 10
-),
-
-bottom5_consistency AS (
-    SELECT
-        statename,
-        COUNT(*) AS years_in_bottom5,
-        ROUND(AVG(avg_yearly_index), 2) AS avg_index_across_years,
-        ROUND(AVG(rank_asc), 1) AS avg_rank
-    FROM yearly_rankings
-    WHERE rank_asc <= 5
-    GROUP BY statename
-    HAVING COUNT(*) >= 10
+    HAVING SUM(CASE WHEN rank_high <= 5 THEN 1 ELSE 0 END) >= 10 
+        OR SUM(CASE WHEN rank_low <= 5 THEN 1 ELSE 0 END) >= 10
 )
 
-SELECT 
-    'Top 5 Consistent' AS category,
-    statename,
-    years_in_top5,
-    avg_index_across_years,
-    avg_rank
-FROM top5_consistency
-ORDER BY years_in_top5 DESC, avg_rank ASC
+-- Step 3: Get top 5 most consistent high and low performers
+SELECT 'Top 5 Consistent' AS category, statename, years_top5 AS years_count, avg_index_overall, avg_rank_high AS avg_rank
+FROM consistency_counts 
+WHERE years_top5 >= 10
+ORDER BY years_top5 DESC, avg_rank_high ASC
 LIMIT 5
 
 UNION ALL
 
-SELECT 
-    'Bottom 5 Consistent' AS category,
-    statename,
-    years_in_bottom5,
-    avg_index_across_years,
-    avg_rank
-FROM bottom5_consistency
-ORDER BY years_in_bottom5 DESC, avg_rank ASC
+SELECT 'Bottom 5 Consistent' AS category, statename, years_bottom5 AS years_count, avg_index_overall, avg_rank_low AS avg_rank
+FROM consistency_counts 
+WHERE years_bottom5 >= 10
+ORDER BY years_bottom5 DESC, avg_rank_low ASC
 LIMIT 5;

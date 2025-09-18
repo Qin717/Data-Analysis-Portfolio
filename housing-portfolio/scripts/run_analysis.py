@@ -167,64 +167,47 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     # and bottom 5 most consistent states that ranked in the bottom 5 
     # in average housing values across the years (minimum 10 years)?
     q3 = """
-    WITH state_values AS (
+    -- Step 1: Get yearly rankings for each state
+    WITH yearly_rankings AS (
         SELECT
             statename,
             year,
-            ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
+            ROUND(AVG(yearlyindex), 2) AS avg_index,
+            ROW_NUMBER() OVER (PARTITION BY year ORDER BY AVG(yearlyindex) DESC) AS rank_high,
+            ROW_NUMBER() OVER (PARTITION BY year ORDER BY AVG(yearlyindex) ASC) AS rank_low
         FROM home_values_yearly_clean
         GROUP BY statename, year
     ),
-    yearly_rankings AS (
+    -- Step 2: Count years in top 5 and bottom 5
+    consistency_counts AS (
         SELECT
             statename,
-            year,
-            avg_yearly_index,
-            ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index DESC) AS rank_desc,
-            ROW_NUMBER() OVER (PARTITION BY year ORDER BY avg_yearly_index ASC) AS rank_asc
-        FROM state_values
-    ),
-    top5_consistency AS (
-        SELECT
-            statename,
-            COUNT(*) AS years_in_top5,
-            ROUND(AVG(avg_yearly_index), 2) AS avg_index_across_years,
-            ROUND(AVG(rank_desc), 1) AS avg_rank
+            SUM(CASE WHEN rank_high <= 5 THEN 1 ELSE 0 END) AS years_top5,
+            SUM(CASE WHEN rank_low <= 5 THEN 1 ELSE 0 END) AS years_bottom5,
+            ROUND(AVG(avg_index), 2) AS avg_index_overall,
+            ROUND(AVG(rank_high), 1) AS avg_rank_high,
+            ROUND(AVG(rank_low), 1) AS avg_rank_low
         FROM yearly_rankings
-        WHERE rank_desc <= 5
         GROUP BY statename
-        HAVING COUNT(*) >= 10
-    ),
-    bottom5_consistency AS (
-        SELECT
-            statename,
-            COUNT(*) AS years_in_bottom5,
-            ROUND(AVG(avg_yearly_index), 2) AS avg_index_across_years,
-            ROUND(AVG(rank_asc), 1) AS avg_rank
-        FROM yearly_rankings
-        WHERE rank_asc <= 5
-        GROUP BY statename
-        HAVING COUNT(*) >= 10
+        HAVING SUM(CASE WHEN rank_high <= 5 THEN 1 ELSE 0 END) >= 10 
+            OR SUM(CASE WHEN rank_low <= 5 THEN 1 ELSE 0 END) >= 10
     )
-    (SELECT 
-        'Top 5 Consistent' AS category,
-        statename,
-        years_in_top5,
-        avg_index_across_years,
-        avg_rank
-    FROM top5_consistency
-    ORDER BY years_in_top5 DESC, avg_rank ASC
-    LIMIT 5)
+    -- Step 3: Get top 5 most consistent high and low performers
+    SELECT * FROM (
+        SELECT 'Top 5 Consistent' AS category, statename, years_top5 AS years_count, avg_index_overall, avg_rank_high AS avg_rank
+        FROM consistency_counts 
+        WHERE years_top5 >= 10
+        ORDER BY years_top5 DESC, avg_rank_high ASC
+        LIMIT 5
+    ) AS top_results
     UNION ALL
-    (SELECT 
-        'Bottom 5 Consistent' AS category,
-        statename,
-        years_in_bottom5,
-        avg_index_across_years,
-        avg_rank
-    FROM bottom5_consistency
-    ORDER BY years_in_bottom5 DESC, avg_rank ASC
-    LIMIT 5);
+    SELECT * FROM (
+        SELECT 'Bottom 5 Consistent' AS category, statename, years_bottom5 AS years_count, avg_index_overall, avg_rank_low AS avg_rank
+        FROM consistency_counts 
+        WHERE years_bottom5 >= 10
+        ORDER BY years_bottom5 DESC, avg_rank_low ASC
+        LIMIT 5
+    ) AS bottom_results;
     """
     df3 = con.execute(q3).df()
     df_to_csv(df3, "consistent_rankings_analysis")
@@ -240,7 +223,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         
         # Top performers chart
         if not top_performers.empty:
-            bars1 = ax1.bar(top_performers['statename'], top_performers['years_in_top5'], color='#2E7D32')
+            bars1 = ax1.bar(top_performers['statename'], top_performers['years_count'], color='#2E7D32')
             ax1.set_title('States Consistently in Top 5 (Years)', fontsize=14, fontweight='bold')
             ax1.set_xlabel('State', fontsize=12)
             ax1.set_ylabel('Years in Top 5', fontsize=12)
@@ -254,7 +237,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         
         # Bottom performers chart
         if not bottom_performers.empty:
-            bars2 = ax2.bar(bottom_performers['statename'], bottom_performers['years_in_top5'], color='#D32F2F')
+            bars2 = ax2.bar(bottom_performers['statename'], bottom_performers['years_count'], color='#D32F2F')
             ax2.set_title('States Consistently in Bottom 5 (Years)', fontsize=14, fontweight='bold')
             ax2.set_xlabel('State', fontsize=12)
             ax2.set_ylabel('Years in Bottom 5', fontsize=12)
@@ -305,17 +288,17 @@ def write_summary():
     # Analyze consistent rankings
     top_consistent_line = "N/A"
     bottom_consistent_line = "N/A"
-    if not rankings.empty and {"category", "statename", "years_in_top5"}.issubset(rankings.columns):
+    if not rankings.empty and {"category", "statename", "years_count"}.issubset(rankings.columns):
         top_consistent = rankings[rankings['category'] == 'Top 5 Consistent']
         bottom_consistent = rankings[rankings['category'] == 'Bottom 5 Consistent']
         
         if not top_consistent.empty:
-            top_state = top_consistent.sort_values('years_in_top5', ascending=False).head(1).iloc[0]
-            top_consistent_line = f"{top_state['statename']} ({int(top_state['years_in_top5'])} years in top 5)"
+            top_state = top_consistent.sort_values('years_count', ascending=False).head(1).iloc[0]
+            top_consistent_line = f"{top_state['statename']} ({int(top_state['years_count'])} years in top 5)"
         
         if not bottom_consistent.empty:
-            bottom_state = bottom_consistent.sort_values('years_in_top5', ascending=False).head(1).iloc[0]
-            bottom_consistent_line = f"{bottom_state['statename']} ({int(bottom_state['years_in_top5'])} years in bottom 5)"
+            bottom_state = bottom_consistent.sort_values('years_count', ascending=False).head(1).iloc[0]
+            bottom_consistent_line = f"{bottom_state['statename']} ({int(bottom_state['years_count'])} years in bottom 5)"
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     out_path = REPORTS / "summary.txt"
