@@ -79,105 +79,6 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     """
     df1 = con.execute(q1).df()
     df_to_csv(df1, "yearly_average_by_state")
-    
-    # Q2: Which states have experienced the fastest and slowest growth 
-    # in housing values since 2000?
-    q2 = """
-    WITH state_values AS (
-        SELECT
-            statename,
-            year,
-            ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
-        FROM home_values_yearly_clean
-        WHERE yearlyindex IS NOT NULL
-        GROUP BY statename, year
-    ),
-    growth_calc AS (
-        SELECT
-            statename,
-            MIN(CASE WHEN year = 2000 THEN avg_yearly_index END) AS value_2000,
-            MAX(CASE WHEN year = 2025 THEN avg_yearly_index END) AS value_2025
-        FROM state_values
-        GROUP BY statename
-    )
-    SELECT
-        statename,
-        value_2000,
-        value_2025,
-        ROUND(((value_2025 - value_2000) / value_2000) * 100, 2) AS pct_growth
-    FROM growth_calc
-    WHERE value_2000 IS NOT NULL AND value_2025 IS NOT NULL
-    ORDER BY pct_growth DESC;
-    """
-    df2 = con.execute(q2).df()
-    df_to_csv(df2, "fastest_growth_since_2000")
-    bar_chart(df2, "statename", "pct_growth", "Home Value Index Fastest Growth Since 2000 (Top 10)", "fastest_growth_top10")
-
-    # Q3: Has the gap between the most expensive and least expensive states 
-    # widened from 2000 to 2025?
-    q3 = """
-    WITH state_values AS (
-        SELECT
-            statename,
-            year,
-            ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
-        FROM home_values_yearly_clean
-        WHERE yearlyindex IS NOT NULL
-        GROUP BY statename, year
-    ),
-    gap_analysis AS (
-        SELECT
-            year,
-            MAX(avg_yearly_index) AS max_value,
-            MIN(avg_yearly_index) AS min_value,
-            MAX(avg_yearly_index) - MIN(avg_yearly_index) AS gap,
-            ROUND(((MAX(avg_yearly_index) - MIN(avg_yearly_index)) / MIN(avg_yearly_index)) * 100, 2) AS gap_pct
-        FROM state_values
-        WHERE year IN (2000, 2025)
-        GROUP BY year
-    )
-    SELECT
-        year,
-        max_value,
-        min_value,
-        gap,
-        gap_pct,
-        CASE 
-            WHEN year = 2000 THEN 'Baseline'
-            WHEN year = 2025 THEN 
-                CASE 
-                    WHEN gap > LAG(gap) OVER (ORDER BY year) THEN 'Gap Widened'
-                    WHEN gap < LAG(gap) OVER (ORDER BY year) THEN 'Gap Narrowed'
-                    ELSE 'Gap Unchanged'
-                END
-        END AS gap_trend
-    FROM gap_analysis
-    ORDER BY year;
-    """
-    df3 = con.execute(q3).df()
-    df_to_csv(df3, "gap_analysis_2000_2025")
-    
-    # Create a simple comparison chart for the gap
-    if len(df3) >= 2:
-        plt.figure(figsize=(10, 6))
-        years = df3['year'].astype(str)
-        gaps = df3['gap']
-        
-        bars = plt.bar(years, gaps, color=['#1f77b4', '#ff7f0e'])
-        plt.title('Gap Between Most and Least Expensive States: 2000 vs 2025', fontsize=14, fontweight='bold')
-        plt.xlabel('Year', fontsize=12)
-        plt.ylabel('Gap (Index Points)', fontsize=12)
-        
-        # Add value labels on bars
-        for bar, gap in zip(bars, gaps):
-            plt.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 5,
-                    f'{gap:.1f}', ha='center', va='bottom', fontsize=11, fontweight='bold')
-        
-        plt.tight_layout()
-        out = FIGS / "gap_comparison_2000_2025.png"
-        plt.savefig(out, dpi=200, bbox_inches="tight")
-        plt.close()
-        print(f"[ok] wrote {out}")
 
 
 def write_summary():
@@ -186,14 +87,6 @@ def write_summary():
         yearly_avg = pd.read_csv(REPORTS / "yearly_average_by_state.csv")
     except FileNotFoundError:
         yearly_avg = pd.DataFrame()
-    try:
-        growth = pd.read_csv(REPORTS / "fastest_growth_since_2000.csv")
-    except FileNotFoundError:
-        growth = pd.DataFrame()
-    try:
-        gap = pd.read_csv(REPORTS / "gap_analysis_2000_2025.csv")
-    except FileNotFoundError:
-        gap = pd.DataFrame()
 
     # Compute findings with fallbacks
     yearly_stats_line = "N/A"
@@ -201,21 +94,6 @@ def write_summary():
         total_states = yearly_avg['statename'].nunique()
         year_range = f"{yearly_avg['year'].min()}-{yearly_avg['year'].max()}"
         yearly_stats_line = f"{total_states} states, {year_range} period"
-    
-    highest_growth_line = "N/A"
-    if not growth.empty and {"statename", "pct_growth"}.issubset(growth.columns):
-        top_growth = growth.sort_values("pct_growth", ascending=False).head(1).iloc[0]
-        highest_growth_line = f"{top_growth['statename']} ({top_growth['pct_growth']:.2f}% since 2000)"
-
-
-    gap_verdict_line = "N/A"
-    if not gap.empty and {"year", "gap", "gap_trend"}.issubset(gap.columns) and len(gap) >= 2:
-        gap_2000 = float(gap.loc[gap["year"] == 2000, "gap"].iloc[0]) if not gap.loc[gap["year"] == 2000].empty else None
-        gap_2025 = float(gap.loc[gap["year"] == 2025, "gap"].iloc[0]) if not gap.loc[gap["year"] == 2025].empty else None
-        gap_trend = gap.loc[gap["year"] == 2025, "gap_trend"].iloc[0] if not gap.loc[gap["year"] == 2025].empty else "Unknown"
-        if gap_2000 is not None and gap_2025 is not None:
-            gap_verdict_line = f"{gap_trend} (2000: {gap_2000:,.2f} → 2025: {gap_2025:,.2f})"
-
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     out_path = REPORTS / "summary.txt"
@@ -223,8 +101,6 @@ def write_summary():
         f.write("Housing Portfolio Summary\n")
         f.write("==========================\n\n")
         f.write("- Dataset coverage: " + yearly_stats_line + "\n")
-        f.write("- Highest growth since 2000: " + highest_growth_line + "\n")
-        f.write("- Gap 2000 vs 2025: " + gap_verdict_line + "\n")
     print(f"[ok] wrote {out_path}")
 
 def main():
