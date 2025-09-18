@@ -10,7 +10,6 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
 
 REPO = Path(__file__).resolve().parents[1]
 DATA = REPO / "data"
@@ -40,72 +39,30 @@ def df_to_csv(df: pd.DataFrame, name: str):
     df.to_csv(out, index=False)
     print(f"[ok] wrote {out}")
 
-def bar_chart(
-    df: pd.DataFrame,
-    x: str,
-    y: str,
-    title: str,
-    filename: str,
-    top_n: int = 10,
-    orientation: str = "horizontal",
-):
-    # Sort, take Top-N, and reverse for horizontal barh (largest at top)
-    df_plot = df.sort_values(y, ascending=False).head(top_n).iloc[::-1]
-
-    # Use a clean, professional style
-    plt.style.use("seaborn-v0_8-whitegrid")
-    fig, ax = plt.subplots(figsize=(11, 7), dpi=160)
-
-    if orientation == "vertical":
-        bars = ax.bar(df_plot[x], df_plot[y], color="#2E7D32")
-        ax.set_title(title, fontsize=16, fontweight="bold")
-        ax.set_xlabel("State", fontsize=12)
-        ax.tick_params(axis="x", labelsize=10, rotation=45)
-    else:
-        bars = ax.barh(df_plot[x], df_plot[y], color="#2E7D32")
-        ax.set_title(title, fontsize=16, fontweight="bold")
-        ax.set_ylabel("State", fontsize=12)
-        ax.tick_params(axis="y", labelsize=11)
-
-    # If y looks like a percent metric, format axis and labels accordingly
-    is_percent = ("pct" in y.lower()) or ("%" in title)
-    if is_percent:
-        ax.xaxis.set_major_formatter(mtick.PercentFormatter(xmax=100))
-        value_fmt = lambda v: f"{v:.1f}%"
-        ax.set_xlabel("Percent", fontsize=11)
-    else:
-        value_fmt = lambda v: f"{v:,.2f}"
-
-    # Subtle gridlines
-    if orientation == "vertical":
-        ax.grid(axis="y", linestyle="--", alpha=0.3)
-        ax.grid(False, axis="x")
-    else:
-        ax.grid(axis="x", linestyle="--", alpha=0.3)
-        ax.grid(False, axis="y")
-
-    # Annotate values at bar ends
+def bar_chart(df: pd.DataFrame, x: str, y: str, title: str, filename: str, top_n: int = 10):
+    if top_n and len(df) > top_n:
+        df = df.sort_values(y, ascending=False).head(top_n)
+    
+    # Sort with highest values on the left (ascending=False)
+    df = df.sort_values(y, ascending=False)
+    
+    plt.figure(figsize=(12, 6))
+    bars = plt.bar(df[x], df[y], color="#2E7D32")
+    plt.title(title, fontsize=14, fontweight="bold")
+    plt.xlabel("State", fontsize=12)
+    plt.ylabel("Percent (%)", fontsize=12)
+    plt.xticks(rotation=45, ha="right")
+    
+    # Add value labels on top of bars
     for bar in bars:
-        if orientation == "vertical":
-            height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width() / 2,
-                    height + (max(df_plot[y]) * 0.01),
-                    value_fmt(height),
-                    va="bottom", ha="center", fontsize=10, color="#333333", rotation=0)
-        else:
-            width = bar.get_width()
-            ax.text(width + (max(df_plot[y]) * 0.01),
-                    bar.get_y() + bar.get_height() / 2,
-                    value_fmt(width),
-                    va="center", ha="left", fontsize=10, color="#333333")
-
-    # Ensure enough left margin for long state names
-    fig.tight_layout()
-    if orientation != "vertical":
-        fig.subplots_adjust(left=0.28)
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2., height + 0.5,
+                f'{height:.1f}%', ha='center', va='bottom', fontsize=9)
+    
+    plt.tight_layout()
     out = FIGS / f"{filename}.png"
-    fig.savefig(out, dpi=200, bbox_inches="tight")
-    plt.close(fig)
+    plt.savefig(out, dpi=200, bbox_inches="tight")
+    plt.close()
     print(f"[ok] wrote {out}")
 
 def run_queries(con: duckdb.DuckDBPyConnection):
@@ -136,16 +93,43 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     """
     df1 = con.execute(q1).df()
     df_to_csv(df1, "fastest_growth_since_2000")
-    bar_chart(
-        df1,
-        "statename",
-        "pct_growth",
-        "Fastest Growth Since 2000 (%), Top 10",
-        "fastest_growth_top10",
-        orientation="vertical",
-    )
+    bar_chart(df1, "statename", "pct_growth", "Home Value Index Fastest Growth Since 2000 (Top 10)", "fastest_growth_top10")
 
-    # 2) Hardest hit 2007 -> 2009 (removed by request)
+    # 2) Hardest hit 2007 -> 2009
+    q2 = """
+    WITH state_year AS (
+      SELECT statename, year, AVG(yearlyindex) AS avg_index
+      FROM home_values_yearly_clean
+      WHERE yearlyindex IS NOT NULL AND year IN (2007, 2009)
+      GROUP BY 1,2
+    ),
+    crisis_base AS (
+      SELECT
+        statename,
+        MAX(CASE WHEN year = 2007 THEN avg_index END) AS idx_2007,
+        MAX(CASE WHEN year = 2009 THEN avg_index END) AS idx_2009
+      FROM state_year
+      GROUP BY 1
+    )
+    SELECT
+      statename,
+      ROUND(((idx_2009 - idx_2007) / idx_2007) * 100, 2) AS pct_change_07_09
+    FROM crisis_base
+    WHERE idx_2007 IS NOT NULL AND idx_2009 IS NOT NULL
+    ORDER BY pct_change_07_09 ASC;
+    """
+    df2 = con.execute(q2).df()
+    df_to_csv(df2, "hardest_hit_2007_2009")
+    df2_plot = df2.sort_values("pct_change_07_09").head(10)
+    plt.figure()
+    plt.bar(df2_plot["statename"], df2_plot["pct_change_07_09"])
+    plt.title("Hardest Hit 2007→2009 (% change), Worst 10")
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+    out = FIGS / "hardest_hit_2007_2009_worst10.png"
+    plt.savefig(out, dpi=160)
+    plt.close()
+    print(f"[ok] wrote {out}")
 
     # 3) Volatility (std dev of YoY % changes)
     q3 = """
@@ -174,14 +158,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     """
     df3 = con.execute(q3).df()
     df_to_csv(df3, "volatility_by_state")
-    bar_chart(
-        df3,
-        "statename",
-        "yoy_volatility_pct",
-        "YoY Volatility by State (%), Top 10",
-        "volatility_top10",
-        orientation="vertical",
-    )
+    bar_chart(df3, "statename", "yoy_volatility_pct", "YoY Volatility by State (%), Top 10", "volatility_top10")
 
     # 4) Gap widened 2000 vs 2025
     q4 = """
