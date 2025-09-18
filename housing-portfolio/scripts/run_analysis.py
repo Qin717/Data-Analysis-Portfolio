@@ -46,19 +46,22 @@ def bar_chart(df: pd.DataFrame, x: str, y: str, title: str, filename: str, top_n
     # Sort with highest values on the left (ascending=False)
     df = df.sort_values(y, ascending=False)
     
-    plt.figure(figsize=(12, 6))
-    bars = plt.bar(df[x], df[y], color="#2E7D32")
-    plt.title(title, fontsize=14, fontweight="bold")
-    plt.xlabel("State", fontsize=12)
-    plt.ylabel("Percent (%)", fontsize=12)
-    plt.xticks(rotation=45, ha="right")
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(df[x], df[y], color="#2E7D32", alpha=0.8, edgecolor='white', linewidth=1)
+    plt.title(title, fontsize=16, fontweight="bold", pad=20)
+    plt.xlabel("State", fontsize=12, fontweight="bold")
+    plt.ylabel("Growth Percentage (%)", fontsize=12, fontweight="bold")
+    plt.xticks(rotation=45, ha="right", fontsize=10)
+    plt.yticks(fontsize=10)
     
     # Add value labels on top of bars
     for bar in bars:
         height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2., height + 0.5,
-                f'{height:.1f}%', ha='center', va='bottom', fontsize=9)
+        plt.text(bar.get_x() + bar.get_width()/2., height + height*0.01,
+                f'{height:.1f}%', ha='center', va='bottom', fontsize=10, fontweight="bold")
     
+    # Add subtle grid
+    plt.grid(axis='y', alpha=0.3, linestyle='--')
     plt.tight_layout()
     out = FIGS / f"{filename}.png"
     plt.savefig(out, dpi=200, bbox_inches="tight")
@@ -187,17 +190,19 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         # Sort with highest values at the top
         df3 = df3.sort_values('pct_growth', ascending=True)
         
-        plt.figure(figsize=(12, 8))
-        bars = plt.barh(df3['city_state'], df3['pct_growth'], color="#FF6B35")  # Orange color for cities
+        plt.figure(figsize=(10, 6))
+        bars = plt.barh(df3['city_state'], df3['pct_growth'], color="#FF6B35", alpha=0.8, edgecolor='white', linewidth=1)
         
-        plt.title('Top 5 Cities with Highest Growth in Home Values (2000-2025)', fontsize=14, fontweight='bold')
-        plt.xlabel('Growth Percentage (%)', fontsize=12)
-        plt.ylabel('City, State', fontsize=12)
+        plt.title('Top 5 Cities with Highest Growth in Home Values (2000-2025)', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Growth Percentage (%)', fontsize=12, fontweight='bold')
+        plt.ylabel('City, State', fontsize=12, fontweight='bold')
+        plt.xticks(fontsize=10)
+        plt.yticks(fontsize=10)
         
         # Add value labels on the right side of bars
         for i, bar in enumerate(bars):
             width = bar.get_width()
-            plt.text(width + 1, bar.get_y() + bar.get_height()/2,
+            plt.text(width + width*0.01, bar.get_y() + bar.get_height()/2,
                     f'{width:.1f}%', ha='left', va='center', fontsize=10, fontweight='bold')
         
         # Add grid for better readability
