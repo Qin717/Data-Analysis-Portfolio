@@ -51,7 +51,7 @@ def bar_chart(df: pd.DataFrame, x: str, y: str, title: str, filename: str, top_n
     bars = ax.barh(df_plot[x], df_plot[y], color="#2E7D32")
     ax.set_title(title, fontsize=16, fontweight="bold")
     ax.set_ylabel("State", fontsize=12)
-    ax.set_yticklabels(df_plot[x], fontsize=11)
+    ax.tick_params(axis="y", labelsize=11)
 
     # If y looks like a percent metric, format axis and labels accordingly
     is_percent = ("pct" in y.lower()) or ("%" in title)
