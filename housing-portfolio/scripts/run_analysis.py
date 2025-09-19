@@ -194,10 +194,10 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         # Create bars for absolute growth (left y-axis) - Dark blue
         bars = ax1.bar(df2['statename'], df2['absolute_growth'], color='#1f4e79', alpha=0.8, width=0.6)
         ax1.set_xlabel('States', fontsize=12, fontweight='bold')
-        ax1.set_ylabel('Increase in Home Values ($)', fontsize=12, fontweight='bold', color='#1f4e79')
+        ax1.set_ylabel('Increase in Home Values ($)', fontsize=12, fontweight='bold', color='black')
         ax1.set_ylim(0, 700000)
         ax1.set_yticks(range(0, 700001, 100000))
-        ax1.tick_params(axis='y', labelcolor='#1f4e79')
+        ax1.tick_params(axis='y', labelcolor='black')
         
         # Add value labels on bars
         for bar in bars:
