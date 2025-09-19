@@ -96,7 +96,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
             state_data = df1_sample[df1_sample['statename'] == state]
             plt.plot(state_data['year'], state_data['avg_yearly_index'], marker='o', label=state, linewidth=2, color=colors[i % len(colors)])
         
-        plt.title('Yearly Trends of Average Home Values (2000-2025) - Top 10 States', fontsize=14, fontweight='bold')
+        plt.title('Top 10 States by Yearly Average Values Index (2000-2025)', fontsize=14, fontweight='bold')
         plt.xlabel('Year', fontsize=12)
         plt.ylabel('Average Home Value Index', fontsize=12)
         plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
