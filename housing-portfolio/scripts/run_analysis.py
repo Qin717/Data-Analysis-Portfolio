@@ -166,20 +166,20 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     """
     df2 = con.execute(q2).df()
     
-    # Format Q2 data for better presentation
+    # Format Q2 data to match screenshot exactly
     if not df2.empty:
-        # Add formatted columns for better readability
-        df2_formatted = df2.copy()
-        df2_formatted['value_2000_formatted'] = df2_formatted['value_2000'].apply(lambda x: f"${x:,.2f}")
-        df2_formatted['value_2025_formatted'] = df2_formatted['value_2025'].apply(lambda x: f"${x:,.2f}")
-        df2_formatted['pct_growth_formatted'] = df2_formatted['pct_growth'].apply(lambda x: f"{x:.2f}%")
+        # Calculate absolute growth
+        df2['absolute_growth'] = df2['value_2025'] - df2['value_2000']
         
-        # Reorder columns for better presentation
-        df2_formatted = df2_formatted[['statename', 'value_2000_formatted', 'value_2025_formatted', 'pct_growth_formatted', 'value_2000', 'value_2025', 'pct_growth']]
-        df2_formatted.columns = ['State', 'Value_2000_Formatted', 'Value_2025_Formatted', 'Growth_Formatted', 'Value_2000_Raw', 'Value_2025_Raw', 'Growth_Raw']
+        # Create output matching the screenshot format
+        output_df = pd.DataFrame({
+            'State': df2['statename'],
+            'Absolute Growth': df2['absolute_growth'].apply(lambda x: f"{x:,.0f}"),
+            '% Growth': df2['pct_growth'].apply(lambda x: f"{x:.2f}%")
+        })
         
         out = REPORTS / "Q2_Top5_Home_Values_Growth.csv"
-        df2_formatted.to_csv(out, index=False)
+        output_df.to_csv(out, index=False)
         print(f"[ok] wrote {out}")
     else:
         df_to_csv(df2, "q2_top5_states_highest_growth_2000_2025")
