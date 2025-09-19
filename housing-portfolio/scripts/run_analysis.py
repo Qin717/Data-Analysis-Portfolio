@@ -178,12 +178,12 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         df2_formatted = df2_formatted[['statename', 'value_2000_formatted', 'value_2025_formatted', 'pct_growth_formatted', 'value_2000', 'value_2025', 'pct_growth']]
         df2_formatted.columns = ['State', 'Value_2000_Formatted', 'Value_2025_Formatted', 'Growth_Formatted', 'Value_2000_Raw', 'Value_2025_Raw', 'Growth_Raw']
         
-        out = REPORTS / "Q2_Top5_States_Highest_Growth_2000_2025.csv"
+        out = REPORTS / "Q2_Top5_Home_Values_Growth.csv"
         df2_formatted.to_csv(out, index=False)
         print(f"[ok] wrote {out}")
     else:
         df_to_csv(df2, "q2_top5_states_highest_growth_2000_2025")
-    bar_chart(df2, "statename", "pct_growth", "Top 5 States with Highest Growth in Home Values (2000-2025)", "q2_top5_states_highest_growth")
+    bar_chart(df2, "statename", "pct_growth", "Top 5 States with Highest Growth in Home Values (2000-2025)", "Q2_Top5_Home_Values_Growth")
     
     # Q3: Which top 5 cities have shown the highest growth in home value index from 2000 to 2025?
     q3 = """
