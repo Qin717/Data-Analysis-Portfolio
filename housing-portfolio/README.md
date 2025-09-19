@@ -45,7 +45,7 @@ housing-portfolio/
 │   ├── run_analysis.py
 │   └── create_excel_workbooks.py
 ├── excel/                         # Excel workbooks
-│   ├── Q1_Yearly_Average_Home_Values.xlsx
+│   ├── Q1_Top10_States_Average_Values.xlsx
 │   ├── Q2_State_Growth_Analysis.xlsx
 │   ├── Q3_City_Growth_Analysis.xlsx
 │   ├── Q4_State_Coverage_Analysis.xlsx
@@ -143,3 +143,4 @@ This project demonstrates:
 ---
 
 *This portfolio showcases comprehensive data analysis skills across multiple platforms, demonstrating versatility and depth in modern data analysis tools and techniques.*
+

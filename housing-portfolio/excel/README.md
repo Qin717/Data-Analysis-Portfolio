@@ -4,21 +4,21 @@ This folder contains Excel workbooks that demonstrate advanced Excel skills for 
 
 ## 📊 Excel Workbooks Overview
 
-### Q1: Yearly Average Home Values Analysis
-**File:** `Q1_Yearly_Average_Home_Values.xlsx`
+### Q1: Top 10 States Average Values Analysis
+**File:** `Q1_Top10_States_Average_Values.xlsx`
 
-**Sheets:**
-- **Raw_Data**: Sample of 1,000 records for analysis
-- **Yearly_Averages**: Pivot-ready data showing yearly averages by state
-- **Summary_Stats**: Statistical summary (count, mean, min, max, std dev)
-- **Top_10_States**: States ranked by average home value index
+**Content:**
+- **Combined Analysis**: Integrated table and chart in a single workbook
+- **Top 10 States**: California, Colorado, Connecticut, DC, Hawaii, Massachusetts, Maryland, New Jersey, Utah, Washington
+- **Time Period**: 2000-2025 yearly trends
+- **Visualization**: Professional line chart showing housing market trends including 2008 crisis impact
 
 **Excel Skills Demonstrated:**
-- ✅ Data import and cleaning
-- ✅ Pivot table preparation
-- ✅ Statistical functions (AVERAGE, COUNT, MIN, MAX, STDEV)
-- ✅ Data sorting and ranking
-- ✅ Multi-sheet workbook organization
+- ✅ Advanced data analysis and state ranking
+- ✅ Professional chart creation with multiple data series
+- ✅ Trend analysis and market cycle identification
+- ✅ Data visualization with clear legends and formatting
+- ✅ Combined table and chart presentation
 
 ---
 
@@ -122,3 +122,4 @@ These workbooks demonstrate proficiency in:
 ---
 
 *These Excel workbooks complement the SQL and Python analysis, showing versatility across multiple data analysis tools and platforms.*
+

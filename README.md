@@ -45,7 +45,13 @@ I enjoy solving problems, uncovering insights from raw data, and presenting them
 ---
 
 ### 📈 Excel & Visualization Projects
-*(Coming soon — Excel dashboards, Tableau/Power BI visualizations)*
+- [Housing Market Excel Analysis](housing-portfolio/excel/)  
+  *Advanced Excel analysis of US housing values from 2000–2025.*  
+  - Tools: Excel, Pivot Tables, Advanced Charts  
+  - Key deliverables: Top 10 states analysis, trend visualization, market cycle identification  
+  - Skills: Data analysis, professional charting, trend analysis, combined table/chart presentation  
+
+📊 [View Excel workbooks →](housing-portfolio/excel/)
 
 ---
 
