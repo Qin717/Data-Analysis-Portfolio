@@ -203,7 +203,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         for bar in bars:
             height = bar.get_height()
             ax1.text(bar.get_x() + bar.get_width()/2., height + height*0.01,
-                    f'${height:,.0f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+                    f'${height:,.0f}', ha='center', va='bottom', fontsize=10, fontweight='bold', color='black')
         
         # Create second y-axis for percentage growth
         ax2 = ax1.twinx()
@@ -216,8 +216,8 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         
         # Add percentage labels on line points
         for i, (state, pct) in enumerate(zip(df2['statename'], df2['pct_growth'])):
-            ax2.text(i, pct + 10, f'{pct:.2f}%', ha='center', va='bottom', 
-                    fontsize=10, fontweight='bold', color='#FFD700')
+            ax2.text(i, pct + 10, f'{pct:.2f}%', ha='center', va='bottom',
+                    fontsize=10, fontweight='bold', color='black')
         
         # Set title
         plt.title('Top 5 States: Home Value Growth (2000-2025)', fontsize=16, fontweight='bold', pad=20)
