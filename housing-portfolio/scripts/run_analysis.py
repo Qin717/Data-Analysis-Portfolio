@@ -81,7 +81,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     ORDER BY statename, year;
     """
     df1 = con.execute(q1).df()
-    df_to_csv(df1, "q1_yearly_average_by_state")
+    df_to_csv(df1, "Q1_Top10_States_Average_Values")
     
     # Create a line chart for Q1 showing trends over time
     if not df1.empty:
