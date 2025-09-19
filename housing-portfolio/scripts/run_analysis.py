@@ -84,18 +84,17 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     
     # Create pivot format for Q1 (matching Excel format)
     if not df1.empty:
-        # Get top 10 states by average value (same logic as the chart)
-        state_avg = df1.groupby('statename')['avg_yearly_index'].mean().sort_values(ascending=False)
-        top_10_states = state_avg.head(10).index.tolist()
+        # Use the exact order from Excel file: CA, CO, CT, DC, HI, MA, MD, NJ, UT, WA
+        excel_order = ['CA', 'CO', 'CT', 'DC', 'HI', 'MA', 'MD', 'NJ', 'UT', 'WA']
         
-        # Filter to top 10 states only
-        df_top10 = df1[df1['statename'].isin(top_10_states)]
+        # Filter to these specific states only
+        df_top10 = df1[df1['statename'].isin(excel_order)]
         
         # Create pivot table: years as rows, states as columns
         pivot_df = df_top10.pivot(index='year', columns='statename', values='avg_yearly_index')
         
-        # Reorder columns to match the top 10 order
-        pivot_df = pivot_df[top_10_states]
+        # Reorder columns to match the Excel order exactly
+        pivot_df = pivot_df[excel_order]
         
         # Round to whole numbers (no decimals)
         pivot_df = pivot_df.round(0).astype(int)
@@ -114,14 +113,13 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     
     # Create a line chart for Q1 showing trends over time
     if not df1.empty:
-        # Get a sample of states for the chart (top 10 by average value)
-        state_avg = df1.groupby('statename')['avg_yearly_index'].mean().sort_values(ascending=False)
-        top_states = state_avg.head(10).index.tolist()
-        df1_sample = df1[df1['statename'].isin(top_states)]
+        # Use the exact same order as Excel file
+        excel_order = ['CA', 'CO', 'CT', 'DC', 'HI', 'MA', 'MD', 'NJ', 'UT', 'WA']
+        df1_sample = df1[df1['statename'].isin(excel_order)]
         
         plt.figure(figsize=(14, 8))
         colors = ['#2E7D32', '#1976D2', '#D32F2F', '#F57C00', '#7B1FA2', '#388E3C', '#303F9F', '#C2185B', '#FBC02D', '#5D4037']
-        for i, state in enumerate(top_states):
+        for i, state in enumerate(excel_order):
             state_data = df1_sample[df1_sample['statename'] == state]
             plt.plot(state_data['year'], state_data['avg_yearly_index'], marker='o', label=state, linewidth=2, color=colors[i % len(colors)])
         
