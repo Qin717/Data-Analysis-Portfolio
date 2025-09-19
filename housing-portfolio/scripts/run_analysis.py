@@ -209,10 +209,10 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         ax2 = ax1.twinx()
         line = ax2.plot(df2['statename'], df2['pct_growth'], color='#FFD700', marker='o', 
                        linewidth=3, markersize=8, label='% Growth')
-        ax2.set_ylabel('% Growth (2000-2025)', fontsize=12, fontweight='bold', color='#FFD700')
+        ax2.set_ylabel('% Growth (2000-2025)', fontsize=12, fontweight='bold', color='black')
         ax2.set_ylim(0, 400)
         ax2.set_yticks(range(0, 401, 50))
-        ax2.tick_params(axis='y', labelcolor='#FFD700')
+        ax2.tick_params(axis='y', labelcolor='black')
         
         # Add percentage labels on line points
         for i, (state, pct) in enumerate(zip(df2['statename'], df2['pct_growth'])):
