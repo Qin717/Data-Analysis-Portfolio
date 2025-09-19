@@ -97,12 +97,17 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         # Reorder columns to match the top 10 order
         pivot_df = pivot_df[top_10_states]
         
-        # Round to 2 decimal places
-        pivot_df = pivot_df.round(2)
+        # Round to whole numbers (no decimals)
+        pivot_df = pivot_df.round(0).astype(int)
         
-        # Save the pivot CSV
+        # Format numbers with commas for better readability
+        pivot_df_formatted = pivot_df.copy()
+        for col in pivot_df_formatted.columns:
+            pivot_df_formatted[col] = pivot_df_formatted[col].apply(lambda x: f"{x:,}")
+        
+        # Save the pivot CSV with comma formatting
         out = REPORTS / "Q1_Top10_States_Average_Values.csv"
-        pivot_df.to_csv(out)
+        pivot_df_formatted.to_csv(out)
         print(f"[ok] wrote {out}")
     else:
         df_to_csv(df1, "Q1_Top10_States_Average_Values")
@@ -162,7 +167,24 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     LIMIT 5;
     """
     df2 = con.execute(q2).df()
-    df_to_csv(df2, "q2_top5_states_highest_growth_2000_2025")
+    
+    # Format Q2 data for better presentation
+    if not df2.empty:
+        # Add formatted columns for better readability
+        df2_formatted = df2.copy()
+        df2_formatted['value_2000_formatted'] = df2_formatted['value_2000'].apply(lambda x: f"${x:,.2f}")
+        df2_formatted['value_2025_formatted'] = df2_formatted['value_2025'].apply(lambda x: f"${x:,.2f}")
+        df2_formatted['pct_growth_formatted'] = df2_formatted['pct_growth'].apply(lambda x: f"{x:.2f}%")
+        
+        # Reorder columns for better presentation
+        df2_formatted = df2_formatted[['statename', 'value_2000_formatted', 'value_2025_formatted', 'pct_growth_formatted', 'value_2000', 'value_2025', 'pct_growth']]
+        df2_formatted.columns = ['State', 'Value_2000_Formatted', 'Value_2025_Formatted', 'Growth_Formatted', 'Value_2000_Raw', 'Value_2025_Raw', 'Growth_Raw']
+        
+        out = REPORTS / "Q2_Top5_States_Highest_Growth_2000_2025.csv"
+        df2_formatted.to_csv(out, index=False)
+        print(f"[ok] wrote {out}")
+    else:
+        df_to_csv(df2, "q2_top5_states_highest_growth_2000_2025")
     bar_chart(df2, "statename", "pct_growth", "Top 5 States with Highest Growth in Home Values (2000-2025)", "q2_top5_states_highest_growth")
     
     # Q3: Which top 5 cities have shown the highest growth in home value index from 2000 to 2025?
@@ -205,7 +227,25 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     LIMIT 5;
     """
     df3 = con.execute(q3).df()
-    df_to_csv(df3, "q3_top5_cities_highest_growth_2000_2025")
+    
+    # Format Q3 data for better presentation
+    if not df3.empty:
+        # Add formatted columns for better readability
+        df3_formatted = df3.copy()
+        df3_formatted['value_2000_formatted'] = df3_formatted['value_2000'].apply(lambda x: f"${x:,.2f}")
+        df3_formatted['value_2025_formatted'] = df3_formatted['value_2025'].apply(lambda x: f"${x:,.2f}")
+        df3_formatted['pct_growth_formatted'] = df3_formatted['pct_growth'].apply(lambda x: f"{x:.2f}%")
+        df3_formatted['city_state'] = df3_formatted['city'] + ', ' + df3_formatted['statename']
+        
+        # Reorder columns for better presentation
+        df3_formatted = df3_formatted[['city_state', 'city', 'statename', 'value_2000_formatted', 'value_2025_formatted', 'pct_growth_formatted', 'value_2000', 'value_2025', 'pct_growth']]
+        df3_formatted.columns = ['City_State', 'City', 'State', 'Value_2000_Formatted', 'Value_2025_Formatted', 'Growth_Formatted', 'Value_2000_Raw', 'Value_2025_Raw', 'Growth_Raw']
+        
+        out = REPORTS / "Q3_Top5_Cities_Highest_Growth_2000_2025.csv"
+        df3_formatted.to_csv(out, index=False)
+        print(f"[ok] wrote {out}")
+    else:
+        df_to_csv(df3, "q3_top5_cities_highest_growth_2000_2025")
     
     # Create a horizontal bar chart for Q3 with city names (different from states)
     if not df3.empty:
@@ -250,7 +290,23 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     ORDER BY unique_cities DESC;
     """
     df4 = con.execute(q4).df()
-    df_to_csv(df4, "q4_cities_counties_by_state")
+    
+    # Format Q4 data for better presentation
+    if not df4.empty:
+        # Add formatted columns for better readability
+        df4_formatted = df4.copy()
+        df4_formatted['unique_cities_formatted'] = df4_formatted['unique_cities'].apply(lambda x: f"{x:,}")
+        df4_formatted['unique_counties_formatted'] = df4_formatted['unique_counties'].apply(lambda x: f"{x:,}")
+        
+        # Reorder columns for better presentation
+        df4_formatted = df4_formatted[['statename', 'unique_cities_formatted', 'unique_counties_formatted', 'unique_cities', 'unique_counties']]
+        df4_formatted.columns = ['State', 'Cities_Formatted', 'Counties_Formatted', 'Cities_Raw', 'Counties_Raw']
+        
+        out = REPORTS / "Q4_Cities_Counties_by_State.csv"
+        df4_formatted.to_csv(out, index=False)
+        print(f"[ok] wrote {out}")
+    else:
+        df_to_csv(df4, "q4_cities_counties_by_state")
     
     # Create a bar chart for Q4 showing top 10 states by number of cities
     if not df4.empty:

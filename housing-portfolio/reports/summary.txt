@@ -2,6 +2,6 @@ Housing Portfolio Summary
 ==========================
 
 - Dataset coverage: N/A
-- Highest state growth 2000-2025: ID (348.08% growth)
-- Highest city growth 2000-2025: New Concord, KY (2580.34% growth)
-- Most cities tracked: NY has the most cities (1249)
+- Highest state growth 2000-2025: N/A
+- Highest city growth 2000-2025: N/A
+- Most cities tracked: N/A
