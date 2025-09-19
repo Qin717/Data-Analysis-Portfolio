@@ -217,6 +217,9 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         ax2.set_yticks(range(0, 401, 50))
         ax2.tick_params(axis='y', labelcolor='black')
         
+        # Format right Y-axis tick labels with % symbol
+        ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.0f}%'))
+        
         # Add percentage labels on line points
         for i, (state, pct) in enumerate(zip(df2['statename'], df2['pct_growth'])):
             ax2.text(i, pct + 10, f'{pct:.2f}%', ha='center', va='bottom',
