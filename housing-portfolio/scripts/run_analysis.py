@@ -199,6 +199,9 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         ax1.set_yticks(range(0, 700001, 100000))
         ax1.tick_params(axis='y', labelcolor='black')
         
+        # Format left Y-axis tick labels with commas
+        ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:,.0f}'))
+        
         # Add value labels on bars
         for bar in bars:
             height = bar.get_height()
