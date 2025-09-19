@@ -183,7 +183,60 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         print(f"[ok] wrote {out}")
     else:
         df_to_csv(df2, "q2_top5_states_highest_growth_2000_2025")
-    bar_chart(df2, "statename", "pct_growth", "Top 5 States with Highest Growth in Home Values (2000-2025)", "Q2_Top5_Home_Values_Growth")
+    # Create combo chart for Q2 (matching Excel format)
+    if not df2.empty:
+        # Calculate absolute growth
+        df2['absolute_growth'] = df2['value_2025'] - df2['value_2000']
+        
+        # Create combo chart with bars and line
+        fig, ax1 = plt.subplots(figsize=(12, 8))
+        
+        # Create bars for absolute growth (left y-axis) - Dark blue
+        bars = ax1.bar(df2['statename'], df2['absolute_growth'], color='#1f4e79', alpha=0.8, width=0.6)
+        ax1.set_xlabel('States', fontsize=12, fontweight='bold')
+        ax1.set_ylabel('Increase in Home Values ($)', fontsize=12, fontweight='bold')
+        ax1.set_ylim(0, 700000)
+        ax1.set_yticks(range(0, 700001, 100000))
+        ax1.tick_params(axis='y', labelcolor='#1f4e79')
+        
+        # Add value labels on bars
+        for bar in bars:
+            height = bar.get_height()
+            ax1.text(bar.get_x() + bar.get_width()/2., height + height*0.01,
+                    f'${height:,.0f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+        
+        # Create second y-axis for percentage growth
+        ax2 = ax1.twinx()
+        line = ax2.plot(df2['statename'], df2['pct_growth'], color='#FFD700', marker='o', 
+                       linewidth=3, markersize=8, label='% Growth')
+        ax2.set_ylabel('% Growth (2000-2025)', fontsize=12, fontweight='bold')
+        ax2.set_ylim(0, 400)
+        ax2.set_yticks(range(0, 401, 50))
+        ax2.tick_params(axis='y', labelcolor='#FFD700')
+        
+        # Add percentage labels on line points
+        for i, (state, pct) in enumerate(zip(df2['statename'], df2['pct_growth'])):
+            ax2.text(i, pct + 10, f'{pct:.2f}%', ha='center', va='bottom', 
+                    fontsize=10, fontweight='bold', color='#FFD700')
+        
+        # Set title
+        plt.title('Top 5 States: Home Value Growth (2000-2025)', fontsize=16, fontweight='bold', pad=20)
+        
+        # Create custom legend
+        from matplotlib.patches import Patch
+        from matplotlib.lines import Line2D
+        legend_elements = [Patch(facecolor='#1f4e79', label='Absolute Growth'),
+                          Line2D([0], [0], color='#FFD700', linewidth=3, marker='o', label='% Growth')]
+        ax1.legend(handles=legend_elements, loc='lower center', bbox_to_anchor=(0.5, -0.15), ncol=2)
+        
+        # Add grid
+        ax1.grid(True, alpha=0.3, axis='y')
+        
+        plt.tight_layout()
+        out = FIGS / "Q2_Top5_Home_Values_Growth.png"
+        plt.savefig(out, dpi=200, bbox_inches="tight")
+        plt.close()
+        print(f"[ok] wrote {out}")
     
     # Q3: Which top 5 cities have shown the highest growth in home value index from 2000 to 2025?
     q3 = """
