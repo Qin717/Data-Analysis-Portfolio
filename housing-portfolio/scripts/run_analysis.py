@@ -81,7 +81,31 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     ORDER BY statename, year;
     """
     df1 = con.execute(q1).df()
-    df_to_csv(df1, "Q1_Top10_States_Average_Values")
+    
+    # Create pivot format for Q1 (matching Excel format)
+    if not df1.empty:
+        # Get top 10 states by average value (same logic as the chart)
+        state_avg = df1.groupby('statename')['avg_yearly_index'].mean().sort_values(ascending=False)
+        top_10_states = state_avg.head(10).index.tolist()
+        
+        # Filter to top 10 states only
+        df_top10 = df1[df1['statename'].isin(top_10_states)]
+        
+        # Create pivot table: years as rows, states as columns
+        pivot_df = df_top10.pivot(index='year', columns='statename', values='avg_yearly_index')
+        
+        # Reorder columns to match the top 10 order
+        pivot_df = pivot_df[top_10_states]
+        
+        # Round to 2 decimal places
+        pivot_df = pivot_df.round(2)
+        
+        # Save the pivot CSV
+        out = REPORTS / "Q1_Top10_States_Average_Values.csv"
+        pivot_df.to_csv(out)
+        print(f"[ok] wrote {out}")
+    else:
+        df_to_csv(df1, "Q1_Top10_States_Average_Values")
     
     # Create a line chart for Q1 showing trends over time
     if not df1.empty:
