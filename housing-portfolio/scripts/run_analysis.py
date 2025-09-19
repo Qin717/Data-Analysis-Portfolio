@@ -103,7 +103,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
         
-        out = FIGS / "q1_yearly_trends_top10_states.png"
+        out = FIGS / "Q1_Top10_States_Average_Values.png"
         plt.savefig(out, dpi=200, bbox_inches="tight")
         plt.close()
         print(f"[ok] wrote {out}")
