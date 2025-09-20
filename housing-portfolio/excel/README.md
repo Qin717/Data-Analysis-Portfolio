@@ -41,19 +41,21 @@ This folder contains Excel workbooks that demonstrate advanced Excel skills for 
 ---
 
 ### Q3: City Growth Analysis (2000-2025)
-**File:** `Q3_City_Growth_Analysis.xlsx`
+**File:** `Q3_Top5_Cities_Growth_Analysis.xlsx`
 
-**Sheets:**
-- **City_Growth_Analysis**: Growth calculations for all cities
-- **Top_5_Cities**: Highest growth cities with state information
-- **Cities_by_State**: Aggregated statistics by state
-- **Top_City_per_State**: Best performing city in each state
+**Content:**
+- **Dual Analysis Approach**: Both absolute growth and percentage growth analysis
+- **Top 5 Cities by Absolute Growth**: Atherton (CA), Water Mill (NY), Bridgehampton (NY), Montecito (CA), Los Altos (CA)
+- **Top 5 Cities by Percentage Growth**: Greenwich, Alamo, Wilson, Park City, Houlton
+- **Combined Visualization**: Professional charts showing both growth metrics
+- **Time Period**: 2000-2025 comprehensive analysis
 
 **Excel Skills Demonstrated:**
-- ✅ Multi-level data grouping (city + state)
-- ✅ Advanced aggregation functions
-- ✅ Data consolidation across multiple dimensions
-- ✅ Lookup functions for state-city relationships
+- ✅ Dual-metric analysis (absolute vs percentage growth)
+- ✅ Advanced chart creation with multiple data series
+- ✅ Data comparison and ranking techniques
+- ✅ Professional data visualization with clear formatting
+- ✅ Combined table and chart presentation
 
 ---
 

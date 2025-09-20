@@ -46,8 +46,8 @@ housing-portfolio/
 │   └── create_excel_workbooks.py
 ├── excel/                         # Excel workbooks
 │   ├── Q1_Top10_States_Average_Values.xlsx
-│   ├── Q2_State_Growth_Analysis.xlsx
-│   ├── Q3_City_Growth_Analysis.xlsx
+│   ├── Q2_Top5_Home_Values_Growth.xlsx
+│   ├── Q3_Top5_Cities_Growth_Analysis.xlsx
 │   ├── Q4_State_Coverage_Analysis.xlsx
 │   └── README.md
 ├── reports/                       # Analysis outputs

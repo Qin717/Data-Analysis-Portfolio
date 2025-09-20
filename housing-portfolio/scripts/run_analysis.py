@@ -244,8 +244,8 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.close()
         print(f"[ok] wrote {out}")
     
-    # Q3: Which top 5 cities have shown the highest growth in home value index from 2000 to 2025?
-    q3 = """
+    # Q3A: Which top 5 cities have shown the highest ABSOLUTE growth in home value index from 2000 to 2025?
+    q3a = """
     WITH city_values AS (
         SELECT
             city,
@@ -277,45 +277,146 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         c2000.statename,
         c2000.value_2000,
         c2025.value_2025,
+        (c2025.value_2025 - c2000.value_2000) AS absolute_growth,
+        ROUND(((c2025.value_2025 - c2000.value_2000) / c2000.value_2000) * 100, 2) AS pct_growth
+    FROM city_2000 c2000
+    JOIN city_2025 c2025 ON c2000.city = c2025.city AND c2000.statename = c2025.statename
+    ORDER BY absolute_growth DESC
+    LIMIT 5;
+    """
+    df3a = con.execute(q3a).df()
+    
+    # Format Q3A data for better presentation (Absolute Growth)
+    if not df3a.empty:
+        # Add formatted columns for better readability
+        df3a_formatted = df3a.copy()
+        df3a_formatted['value_2000_formatted'] = df3a_formatted['value_2000'].apply(lambda x: f"${x:,.0f}")
+        df3a_formatted['value_2025_formatted'] = df3a_formatted['value_2025'].apply(lambda x: f"${x:,.0f}")
+        df3a_formatted['absolute_growth_formatted'] = df3a_formatted['absolute_growth'].apply(lambda x: f"${x:,.0f}")
+        df3a_formatted['pct_growth_formatted'] = df3a_formatted['pct_growth'].apply(lambda x: f"{x:.2f}%")
+        df3a_formatted['city_state'] = df3a_formatted['city'] + ', ' + df3a_formatted['statename']
+        
+        # Reorder columns for better presentation
+        df3a_formatted = df3a_formatted[['city_state', 'city', 'statename', 'value_2000_formatted', 'value_2025_formatted', 'absolute_growth_formatted', 'pct_growth_formatted', 'value_2000', 'value_2025', 'absolute_growth', 'pct_growth']]
+        df3a_formatted.columns = ['City_State', 'City', 'State', 'Value_2000_Formatted', 'Value_2025_Formatted', 'Absolute_Growth_Formatted', 'Pct_Growth_Formatted', 'Value_2000_Raw', 'Value_2025_Raw', 'Absolute_Growth_Raw', 'Pct_Growth_Raw']
+        
+        out = REPORTS / "Q3A_Top5_Cities_Absolute_Growth.csv"
+        df3a_formatted.to_csv(out, index=False)
+        print(f"[ok] wrote {out}")
+    else:
+        df_to_csv(df3a, "Q3A_Top5_Cities_Absolute_Growth")
+    
+    # Q3B: Which top 5 cities have shown the highest PERCENTAGE growth in home value index from 2000 to 2025?
+    q3b = """
+    WITH city_values AS (
+        SELECT
+            city,
+            statename,
+            year,
+            ROUND(AVG(yearlyindex), 2) AS avg_yearly_index
+        FROM home_values_yearly_clean
+        WHERE yearlyindex IS NOT NULL
+        GROUP BY city, statename, year
+    ),
+    city_2000 AS (
+        SELECT
+            city,
+            statename,
+            avg_yearly_index AS value_2000
+        FROM city_values
+        WHERE year = 2000
+    ),
+    city_2025 AS (
+        SELECT
+            city,
+            statename,
+            avg_yearly_index AS value_2025
+        FROM city_values
+        WHERE year = 2025
+    )
+    SELECT
+        c2000.city,
+        c2000.statename,
+        c2000.value_2000,
+        c2025.value_2025,
+        (c2025.value_2025 - c2000.value_2000) AS absolute_growth,
         ROUND(((c2025.value_2025 - c2000.value_2000) / c2000.value_2000) * 100, 2) AS pct_growth
     FROM city_2000 c2000
     JOIN city_2025 c2025 ON c2000.city = c2025.city AND c2000.statename = c2025.statename
     ORDER BY pct_growth DESC
     LIMIT 5;
     """
-    df3 = con.execute(q3).df()
+    df3b = con.execute(q3b).df()
     
-    # Format Q3 data for better presentation
-    if not df3.empty:
+    # Format Q3B data for better presentation (Percentage Growth)
+    if not df3b.empty:
         # Add formatted columns for better readability
-        df3_formatted = df3.copy()
-        df3_formatted['value_2000_formatted'] = df3_formatted['value_2000'].apply(lambda x: f"${x:,.2f}")
-        df3_formatted['value_2025_formatted'] = df3_formatted['value_2025'].apply(lambda x: f"${x:,.2f}")
-        df3_formatted['pct_growth_formatted'] = df3_formatted['pct_growth'].apply(lambda x: f"{x:.2f}%")
-        df3_formatted['city_state'] = df3_formatted['city'] + ', ' + df3_formatted['statename']
+        df3b_formatted = df3b.copy()
+        df3b_formatted['value_2000_formatted'] = df3b_formatted['value_2000'].apply(lambda x: f"${x:,.0f}")
+        df3b_formatted['value_2025_formatted'] = df3b_formatted['value_2025'].apply(lambda x: f"${x:,.0f}")
+        df3b_formatted['absolute_growth_formatted'] = df3b_formatted['absolute_growth'].apply(lambda x: f"${x:,.0f}")
+        df3b_formatted['pct_growth_formatted'] = df3b_formatted['pct_growth'].apply(lambda x: f"{x:.2f}%")
+        df3b_formatted['city_state'] = df3b_formatted['city'] + ', ' + df3b_formatted['statename']
         
         # Reorder columns for better presentation
-        df3_formatted = df3_formatted[['city_state', 'city', 'statename', 'value_2000_formatted', 'value_2025_formatted', 'pct_growth_formatted', 'value_2000', 'value_2025', 'pct_growth']]
-        df3_formatted.columns = ['City_State', 'City', 'State', 'Value_2000_Formatted', 'Value_2025_Formatted', 'Growth_Formatted', 'Value_2000_Raw', 'Value_2025_Raw', 'Growth_Raw']
+        df3b_formatted = df3b_formatted[['city_state', 'city', 'statename', 'value_2000_formatted', 'value_2025_formatted', 'absolute_growth_formatted', 'pct_growth_formatted', 'value_2000', 'value_2025', 'absolute_growth', 'pct_growth']]
+        df3b_formatted.columns = ['City_State', 'City', 'State', 'Value_2000_Formatted', 'Value_2025_Formatted', 'Absolute_Growth_Formatted', 'Pct_Growth_Formatted', 'Value_2000_Raw', 'Value_2025_Raw', 'Absolute_Growth_Raw', 'Pct_Growth_Raw']
         
-        out = REPORTS / "Q3_Top5_Cities_Highest_Growth_2000_2025.csv"
-        df3_formatted.to_csv(out, index=False)
+        out = REPORTS / "Q3B_Top5_Cities_Percentage_Growth.csv"
+        df3b_formatted.to_csv(out, index=False)
         print(f"[ok] wrote {out}")
     else:
-        df_to_csv(df3, "q3_top5_cities_highest_growth_2000_2025")
+        df_to_csv(df3b, "Q3B_Top5_Cities_Percentage_Growth")
     
-    # Create a horizontal bar chart for Q3 with city names (different from states)
-    if not df3.empty:
+    # Create charts for both Q3A and Q3B
+    # Q3A Chart: Absolute Growth (matching your first Excel analysis)
+    if not df3a.empty:
         # Create a combined city-state label for better readability
-        df3['city_state'] = df3['city'] + ', ' + df3['statename']
+        df3a['city_state'] = df3a['city'] + ', ' + df3a['statename']
         
         # Sort with highest values at the top
-        df3 = df3.sort_values('pct_growth', ascending=True)
+        df3a = df3a.sort_values('absolute_growth', ascending=True)
         
-        plt.figure(figsize=(10, 6))
-        bars = plt.barh(df3['city_state'], df3['pct_growth'], color="#1976D2", alpha=0.8, edgecolor='white', linewidth=1)
+        plt.figure(figsize=(12, 8))
+        bars = plt.barh(df3a['city_state'], df3a['absolute_growth'], color="#1f4e79", alpha=0.8, edgecolor='white', linewidth=1)
         
-        plt.title('Top 5 Cities with Highest Growth in Home Values (2000-2025)', fontsize=16, fontweight='bold', pad=20)
+        plt.title('Top 5 Cities by Absolute Home Values Growth (2000-2025)', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Absolute Growth ($)', fontsize=12, fontweight='bold')
+        plt.ylabel('City, State', fontsize=12, fontweight='bold')
+        plt.xticks(fontsize=10)
+        plt.yticks(fontsize=10)
+        
+        # Format x-axis with commas
+        ax = plt.gca()
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+        
+        # Add value labels on the right side of bars
+        for i, bar in enumerate(bars):
+            width = bar.get_width()
+            plt.text(width + width*0.01, bar.get_y() + bar.get_height()/2,
+                    f'${width:,.0f}', ha='left', va='center', fontsize=10, fontweight='bold')
+        
+        # Add grid for better readability
+        plt.grid(axis='x', alpha=0.3, linestyle='--')
+        plt.tight_layout()
+        
+        out = FIGS / "Q3A_Top5_Cities_Absolute_Growth.png"
+        plt.savefig(out, dpi=200, bbox_inches="tight")
+        plt.close()
+        print(f"[ok] wrote {out}")
+    
+    # Q3B Chart: Percentage Growth (matching your second Excel analysis)
+    if not df3b.empty:
+        # Create a combined city-state label for better readability
+        df3b['city_state'] = df3b['city'] + ', ' + df3b['statename']
+        
+        # Sort with highest values at the top
+        df3b = df3b.sort_values('pct_growth', ascending=True)
+        
+        plt.figure(figsize=(12, 8))
+        bars = plt.barh(df3b['city_state'], df3b['pct_growth'], color="#1976D2", alpha=0.8, edgecolor='white', linewidth=1)
+        
+        plt.title('Top 5 Cities by % Growth in Home Values (2000-2025)', fontsize=16, fontweight='bold', pad=20)
         plt.xlabel('Growth Percentage (%)', fontsize=12, fontweight='bold')
         plt.ylabel('City, State', fontsize=12, fontweight='bold')
         plt.xticks(fontsize=10)
@@ -325,13 +426,13 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         for i, bar in enumerate(bars):
             width = bar.get_width()
             plt.text(width + width*0.01, bar.get_y() + bar.get_height()/2,
-                    f'{width:.1f}%', ha='left', va='center', fontsize=10, fontweight='bold')
+                    f'{width:.2f}%', ha='left', va='center', fontsize=10, fontweight='bold')
         
         # Add grid for better readability
         plt.grid(axis='x', alpha=0.3, linestyle='--')
         plt.tight_layout()
         
-        out = FIGS / "q3_top5_cities_highest_growth.png"
+        out = FIGS / "Q3B_Top5_Cities_Percentage_Growth.png"
         plt.savefig(out, dpi=200, bbox_inches="tight")
         plt.close()
         print(f"[ok] wrote {out}")
