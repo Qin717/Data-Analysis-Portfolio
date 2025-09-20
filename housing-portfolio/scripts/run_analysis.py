@@ -310,7 +310,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         df_to_csv(df3b, "Q3B_Top5_Cities_Percentage_Growth")
     
     # Create charts for both Q3A and Q3B (matching Excel screenshot format)
-    # Q3A Chart: Absolute Growth (matching your first Excel screenshot)
+    # Q3A Chart: Absolute Growth (EXACT match to your first Excel screenshot)
     if not df3a.empty:
         # Sort by absolute growth descending (highest first)
         df3a = df3a.sort_values('absolute_growth', ascending=False)
@@ -321,30 +321,34 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         x = np.arange(len(df3a))
         width = 0.35
         
-        # Light blue bars for 2000 values
+        # Light blue bars for 2000 values (exact color from screenshot)
         bars_2000 = ax.bar(x - width/2, df3a['value_2000'], width, label='2000', color='#87CEEB', alpha=0.8)
-        # Dark blue bars for 2025 values  
+        # Dark blue bars for 2025 values (exact color from screenshot)
         bars_2025 = ax.bar(x + width/2, df3a['value_2025'], width, label='2025', color='#1f4e79', alpha=0.8)
         
-        # Set labels and title
+        # Set labels and title (exact match to screenshot)
         ax.set_xlabel('Cities', fontsize=12, fontweight='bold')
         ax.set_ylabel('Home Values Index ($)', fontsize=12, fontweight='bold')
         ax.set_title('Top 5 Cities by Absolute Home Values Growth (2000-2025)', fontsize=16, fontweight='bold', pad=20)
         ax.set_xticks(x)
         ax.set_xticklabels(df3a['city'], fontsize=10)
         
-        # Format y-axis with commas
+        # Set exact y-axis range to match screenshot (0 to 9,000,000)
+        ax.set_ylim(0, 9000000)
+        ax.set_yticks(range(0, 9000001, 1000000))
+        
+        # Format y-axis with commas and dollar signs
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
         
-        # Add red text labels for absolute growth above bars
+        # Add red text labels for absolute growth above bars (exact format from screenshot)
         for i, (bar_2000, bar_2025) in enumerate(zip(bars_2000, bars_2025)):
             height_2025 = bar_2025.get_height()
             growth = df3a.iloc[i]['absolute_growth']
             ax.text(bar_2025.get_x() + bar_2025.get_width()/2., height_2025 + height_2025*0.01,
                    f'+${growth:,.0f}', ha='center', va='bottom', fontsize=10, fontweight='bold', color='red')
         
-        # Add legend
-        ax.legend()
+        # Add legend (exact positioning from screenshot)
+        ax.legend(loc='upper left')
         ax.grid(True, alpha=0.3, axis='y')
         plt.tight_layout()
         
@@ -353,7 +357,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.close()
         print(f"[ok] wrote {out}")
     
-    # Q3B Chart: Percentage Growth (matching your second Excel screenshot)
+    # Q3B Chart: Percentage Growth (EXACT match to your second Excel screenshot)
     if not df3b.empty:
         # Sort by percentage growth descending (highest first)
         df3b = df3b.sort_values('pct_growth', ascending=False)
@@ -364,34 +368,42 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         x = np.arange(len(df3b))
         width = 0.35
         
-        # Light blue bars for 2000 values
+        # Light blue bars for 2000 values (exact color from screenshot)
         bars_2000 = ax1.bar(x - width/2, df3b['value_2000'], width, label='2000', color='#87CEEB', alpha=0.8)
-        # Dark blue bars for 2025 values
+        # Dark blue bars for 2025 values (exact color from screenshot)
         bars_2025 = ax1.bar(x + width/2, df3b['value_2025'], width, label='2025', color='#1f4e79', alpha=0.8)
         
-        # Set labels and title
+        # Set labels and title (exact match to screenshot)
         ax1.set_xlabel('Cities', fontsize=12, fontweight='bold')
         ax1.set_ylabel('Home Value Index ($)', fontsize=12, fontweight='bold')
         ax1.set_title('Top 5 Cities by % Growth in Home Values (2000-2025)', fontsize=16, fontweight='bold', pad=20)
         ax1.set_xticks(x)
         ax1.set_xticklabels(df3b['city'], fontsize=10)
         
-        # Format y-axis with commas
+        # Set exact y-axis range to match screenshot (0 to 1,600,000)
+        ax1.set_ylim(0, 1600000)
+        ax1.set_yticks(range(0, 1600001, 200000))
+        
+        # Format y-axis with commas and dollar signs
         ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
         
         # Create second y-axis for percentage growth
         ax2 = ax1.twinx()
         ax2.set_ylabel('% Growth (2000-2025)', fontsize=12, fontweight='bold')
         
-        # Add yellow line with data points for percentage growth
+        # Set exact right y-axis range to match screenshot (0% to 2000%)
+        ax2.set_ylim(0, 2000)
+        ax2.set_yticks(range(0, 2001, 200))
+        
+        # Add yellow line with data points for percentage growth (exact color from screenshot)
         line = ax2.plot(x, df3b['pct_growth'], color='#FFD700', marker='o', linewidth=3, markersize=8, label='% Growth')
         
-        # Add percentage labels on the line points
+        # Add percentage labels on the line points (exact format from screenshot)
         for i, (city, pct) in enumerate(zip(df3b['city'], df3b['pct_growth'])):
             ax2.text(i, pct + pct*0.05, f'{pct:.2f}%', ha='center', va='bottom', 
                     fontsize=10, fontweight='bold', color='black')
         
-        # Add legends
+        # Add legends (exact positioning from screenshot)
         lines1, labels1 = ax1.get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
         ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
