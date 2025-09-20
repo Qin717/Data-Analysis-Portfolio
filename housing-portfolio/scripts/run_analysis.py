@@ -534,9 +534,9 @@ def write_summary():
     except FileNotFoundError:
         city_growth = pd.DataFrame()
     try:
-        state_counts = pd.read_csv(REPORTS / "q4_cities_counties_by_state.csv")
+        state_volatility = pd.read_csv(REPORTS / "Q4_Top10_States_Highest_Volatility.csv")
     except FileNotFoundError:
-        state_counts = pd.DataFrame()
+        state_volatility = pd.DataFrame()
 
     # Compute findings with fallbacks
     yearly_stats_line = "N/A"

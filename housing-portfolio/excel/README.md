@@ -57,6 +57,26 @@ This folder contains Excel workbooks that demonstrate advanced Excel skills for 
 - ✅ Professional data visualization with clear formatting
 - ✅ Combined table and chart presentation
 
+---
+
+### Q4: State Volatility Analysis (2000-2025)
+**File:** `Q4_State_Volatility_Analysis.xlsx`
+
+**Content:**
+- **Volatility Analysis**: Year-over-year housing value volatility by state
+- **Top 10 States**: Highest volatility states ranked by standard deviation
+- **Comprehensive Metrics**: Average YoY change, volatility range, worst/best years
+- **Risk Assessment**: Market stability analysis for investment decisions
+- **Time Period**: 2000-2025 comprehensive volatility tracking
+
+**Excel Skills Demonstrated:**
+- ✅ Statistical analysis with standard deviation calculations
+- ✅ Year-over-year percentage change formulas
+- ✅ Risk assessment and volatility metrics
+- ✅ Professional data visualization for market analysis
+- ✅ Advanced statistical functions and data interpretation
+
+---
 
 ## 🎯 Advanced Excel Skills Showcase
 
