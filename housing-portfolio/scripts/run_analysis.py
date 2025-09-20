@@ -10,6 +10,7 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
 DATA = REPO / "data"
@@ -368,36 +369,43 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     else:
         df_to_csv(df3b, "Q3B_Top5_Cities_Percentage_Growth")
     
-    # Create charts for both Q3A and Q3B
-    # Q3A Chart: Absolute Growth (matching your first Excel analysis)
+    # Create charts for both Q3A and Q3B (matching Excel screenshot format)
+    # Q3A Chart: Absolute Growth (matching your first Excel screenshot)
     if not df3a.empty:
-        # Create a combined city-state label for better readability
-        df3a['city_state'] = df3a['city'] + ', ' + df3a['statename']
+        # Sort by absolute growth descending (highest first)
+        df3a = df3a.sort_values('absolute_growth', ascending=False)
         
-        # Sort with highest values at the top
-        df3a = df3a.sort_values('absolute_growth', ascending=True)
+        fig, ax = plt.subplots(figsize=(12, 8))
         
-        plt.figure(figsize=(12, 8))
-        bars = plt.barh(df3a['city_state'], df3a['absolute_growth'], color="#1f4e79", alpha=0.8, edgecolor='white', linewidth=1)
+        # Create clustered bar chart: 2000 and 2025 values
+        x = np.arange(len(df3a))
+        width = 0.35
         
-        plt.title('Top 5 Cities by Absolute Home Values Growth (2000-2025)', fontsize=16, fontweight='bold', pad=20)
-        plt.xlabel('Absolute Growth ($)', fontsize=12, fontweight='bold')
-        plt.ylabel('City, State', fontsize=12, fontweight='bold')
-        plt.xticks(fontsize=10)
-        plt.yticks(fontsize=10)
+        # Light blue bars for 2000 values
+        bars_2000 = ax.bar(x - width/2, df3a['value_2000'], width, label='2000', color='#87CEEB', alpha=0.8)
+        # Dark blue bars for 2025 values  
+        bars_2025 = ax.bar(x + width/2, df3a['value_2025'], width, label='2025', color='#1f4e79', alpha=0.8)
         
-        # Format x-axis with commas
-        ax = plt.gca()
-        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+        # Set labels and title
+        ax.set_xlabel('Cities', fontsize=12, fontweight='bold')
+        ax.set_ylabel('Home Values Index ($)', fontsize=12, fontweight='bold')
+        ax.set_title('Top 5 Cities by Absolute Home Values Growth (2000-2025)', fontsize=16, fontweight='bold', pad=20)
+        ax.set_xticks(x)
+        ax.set_xticklabels(df3a['city'], fontsize=10)
         
-        # Add value labels on the right side of bars
-        for i, bar in enumerate(bars):
-            width = bar.get_width()
-            plt.text(width + width*0.01, bar.get_y() + bar.get_height()/2,
-                    f'${width:,.0f}', ha='left', va='center', fontsize=10, fontweight='bold')
+        # Format y-axis with commas
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
         
-        # Add grid for better readability
-        plt.grid(axis='x', alpha=0.3, linestyle='--')
+        # Add red text labels for absolute growth above bars
+        for i, (bar_2000, bar_2025) in enumerate(zip(bars_2000, bars_2025)):
+            height_2025 = bar_2025.get_height()
+            growth = df3a.iloc[i]['absolute_growth']
+            ax.text(bar_2025.get_x() + bar_2025.get_width()/2., height_2025 + height_2025*0.01,
+                   f'+${growth:,.0f}', ha='center', va='bottom', fontsize=10, fontweight='bold', color='red')
+        
+        # Add legend
+        ax.legend()
+        ax.grid(True, alpha=0.3, axis='y')
         plt.tight_layout()
         
         out = FIGS / "Q3A_Top5_Cities_Absolute_Growth.png"
@@ -405,31 +413,50 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.close()
         print(f"[ok] wrote {out}")
     
-    # Q3B Chart: Percentage Growth (matching your second Excel analysis)
+    # Q3B Chart: Percentage Growth (matching your second Excel screenshot)
     if not df3b.empty:
-        # Create a combined city-state label for better readability
-        df3b['city_state'] = df3b['city'] + ', ' + df3b['statename']
+        # Sort by percentage growth descending (highest first)
+        df3b = df3b.sort_values('pct_growth', ascending=False)
         
-        # Sort with highest values at the top
-        df3b = df3b.sort_values('pct_growth', ascending=True)
+        fig, ax1 = plt.subplots(figsize=(12, 8))
         
-        plt.figure(figsize=(12, 8))
-        bars = plt.barh(df3b['city_state'], df3b['pct_growth'], color="#1976D2", alpha=0.8, edgecolor='white', linewidth=1)
+        # Create clustered bar chart: 2000 and 2025 values
+        x = np.arange(len(df3b))
+        width = 0.35
         
-        plt.title('Top 5 Cities by % Growth in Home Values (2000-2025)', fontsize=16, fontweight='bold', pad=20)
-        plt.xlabel('Growth Percentage (%)', fontsize=12, fontweight='bold')
-        plt.ylabel('City, State', fontsize=12, fontweight='bold')
-        plt.xticks(fontsize=10)
-        plt.yticks(fontsize=10)
+        # Light blue bars for 2000 values
+        bars_2000 = ax1.bar(x - width/2, df3b['value_2000'], width, label='2000', color='#87CEEB', alpha=0.8)
+        # Dark blue bars for 2025 values
+        bars_2025 = ax1.bar(x + width/2, df3b['value_2025'], width, label='2025', color='#1f4e79', alpha=0.8)
         
-        # Add value labels on the right side of bars
-        for i, bar in enumerate(bars):
-            width = bar.get_width()
-            plt.text(width + width*0.01, bar.get_y() + bar.get_height()/2,
-                    f'{width:.2f}%', ha='left', va='center', fontsize=10, fontweight='bold')
+        # Set labels and title
+        ax1.set_xlabel('Cities', fontsize=12, fontweight='bold')
+        ax1.set_ylabel('Home Value Index ($)', fontsize=12, fontweight='bold')
+        ax1.set_title('Top 5 Cities by % Growth in Home Values (2000-2025)', fontsize=16, fontweight='bold', pad=20)
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(df3b['city'], fontsize=10)
         
-        # Add grid for better readability
-        plt.grid(axis='x', alpha=0.3, linestyle='--')
+        # Format y-axis with commas
+        ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+        
+        # Create second y-axis for percentage growth
+        ax2 = ax1.twinx()
+        ax2.set_ylabel('% Growth (2000-2025)', fontsize=12, fontweight='bold')
+        
+        # Add yellow line with data points for percentage growth
+        line = ax2.plot(x, df3b['pct_growth'], color='#FFD700', marker='o', linewidth=3, markersize=8, label='% Growth')
+        
+        # Add percentage labels on the line points
+        for i, (city, pct) in enumerate(zip(df3b['city'], df3b['pct_growth'])):
+            ax2.text(i, pct + pct*0.05, f'{pct:.2f}%', ha='center', va='bottom', 
+                    fontsize=10, fontweight='bold', color='black')
+        
+        # Add legends
+        lines1, labels1 = ax1.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+        
+        ax1.grid(True, alpha=0.3, axis='y')
         plt.tight_layout()
         
         out = FIGS / "Q3B_Top5_Cities_Percentage_Growth.png"
