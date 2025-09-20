@@ -1,6 +1,6 @@
-City_State,City,State,Value_2000_Formatted,Value_2025_Formatted,Absolute_Growth_Formatted,Pct_Growth_Formatted,Value_2000_Raw,Value_2025_Raw,Absolute_Growth_Raw,Pct_Growth_Raw
-"Greenwich, CT",Greenwich,CT,"$75,929","$1,410,845","$1,334,916",1758.11%,75929,1410845,1334916,1758.11
-"Alamo, CA",Alamo,CA,"$65,359","$749,735","$684,376",1047.10%,65359,749735,684376,1047.1
-"Wilson, NC",Wilson,NC,"$72,828","$828,493","$755,665",1037.60%,72828,828493,755665,1037.6
-"Park City, UT",Park City,UT,"$76,241","$744,888","$668,647",877.02%,76241,744888,668647,877.02
-"Houlton, ME",Houlton,ME,"$38,427","$350,832","$312,405",812.98%,38427,350832,312405,812.98
+City,2000,2025,% Growth
+Greenwich,75929,1410845,1758.11
+Alamo,65359,749735,1047.10
+Wilson,72828,828493,1037.60
+Park City,76241,744888,877.02
+Houlton,38427,350832,812.98

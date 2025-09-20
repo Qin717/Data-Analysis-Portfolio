@@ -1,6 +1,6 @@
-City_State,City,State,Value_2000_Formatted,Value_2025_Formatted,Absolute_Growth_Formatted,Pct_Growth_Formatted,Value_2000_Raw,Value_2025_Raw,Absolute_Growth_Raw,Pct_Growth_Raw
-"Atherton, CA",Atherton,CA,"$2,242,459","$7,669,379","$5,426,920",242.01%,2242459,7669379,5426920,242.01
-"Water Mill, NY",Water Mill,NY,"$837,106","$4,787,128","$3,950,022",471.87%,837106,4787128,3950022,471.87
-"Bridgehampton, NY",Bridgehampton,NY,"$731,911","$4,318,796","$3,586,885",490.07%,731911,4318796,3586885,490.07
-"Montecito, CA",Montecito,CA,"$1,272,436","$4,770,993","$3,498,557",274.95%,1272436,4770993,3498557,274.95
-"Los Altos, CA",Los Altos,CA,"$1,221,979","$4,669,028","$3,447,049",282.20%,1221979,4669028,3447049,282.2
+City,2000,2025,Growth
+Atherton,2242459,7669379,5426920
+Water Mill,837106,4787128,3950022
+Bridgehampton,731911,4318796,3586885
+Montecito,1272436,4770993,3498557
+Los Altos,1221979,4669028,3447049
