@@ -118,14 +118,3 @@ JOIN city_2025 c2025 ON c2000.city = c2025.city AND c2000.statename = c2025.stat
 ORDER BY pct_growth DESC
 LIMIT 5;
 
--- Q4. How many cities & counties are in each state?
-
-SELECT
-    statename,
-    COUNT(DISTINCT city) AS unique_cities,
-    COUNT(DISTINCT countyname) AS unique_counties
-FROM home_values_yearly_clean
-GROUP BY statename
-ORDER BY unique_cities DESC;
-
-

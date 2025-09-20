@@ -10,7 +10,6 @@ This project analyzes home value index data across all U.S. states and cities to
 1. **Q1**: What are the yearly average home value indices by state?
 2. **Q2**: Which 5 states showed the highest growth from 2000-2025?
 3. **Q3**: Which 5 cities showed the highest growth from 2000-2025?
-4. **Q4**: How many cities and counties are tracked in each state?
 
 ## 🛠️ Technical Skills Demonstrated
 
@@ -48,7 +47,6 @@ housing-portfolio/
 │   ├── Q1_Top10_States_Average_Values.xlsx
 │   ├── Q2_Top5_Home_Values_Growth.xlsx
 │   ├── Q3_Top5_Cities_Growth_Analysis.xlsx
-│   ├── Q4_State_Coverage_Analysis.xlsx
 │   └── README.md
 ├── reports/                       # Analysis outputs
 │   ├── figures/                   # Charts and visualizations
@@ -91,10 +89,6 @@ python scripts/create_excel_workbooks.py
 - **Phoenix, AZ** and **Miami, FL** follow closely
 - **Urban centers** show more dramatic growth than rural areas
 
-### Q4: Data Coverage
-- **California** has the most comprehensive coverage
-- **Texas** and **Florida** follow with extensive city/county tracking
-- **Data quality** varies significantly by state
 
 ## 📊 Visualizations
 

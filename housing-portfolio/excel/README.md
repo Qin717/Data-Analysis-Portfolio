@@ -57,22 +57,6 @@ This folder contains Excel workbooks that demonstrate advanced Excel skills for 
 - ✅ Professional data visualization with clear formatting
 - ✅ Combined table and chart presentation
 
----
-
-### Q4: State Coverage Analysis
-**File:** `Q4_State_Coverage_Analysis.xlsx`
-
-**Sheets:**
-- **State_Coverage**: Unique cities and counties by state
-- **Top_10_States**: States with most coverage
-- **Coverage_Statistics**: Summary metrics and averages
-- **Coverage_Categories**: States grouped by coverage levels
-
-**Excel Skills Demonstrated:**
-- ✅ COUNT functions for unique values
-- ✅ Summary statistics and KPIs
-- ✅ Data categorization and grouping
-- ✅ Cross-tabulation techniques
 
 ## 🎯 Advanced Excel Skills Showcase
 
