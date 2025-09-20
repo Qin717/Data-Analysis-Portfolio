@@ -416,52 +416,60 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.close()
         print(f"[ok] wrote {out}")
     
-    # Q4: Which states show the highest volatility in housing values year-over-year?
+    # Q4: Which 5 states show the highest volatility in housing values year-over-year?
     q4 = """
-    WITH state_yearly_volatility AS (
-        SELECT
+    -- Step 1: Calculate yearly averages for each state
+    WITH yearly_averages AS (
+        SELECT 
             statename,
             year,
-            AVG(yearlyindex) AS avg_yearly_index
+            AVG(yearlyindex) AS avg_index
         FROM home_values_yearly_clean
         WHERE yearlyindex IS NOT NULL
         GROUP BY statename, year
     ),
-    state_year_over_year_changes AS (
-        SELECT
+    
+    -- Step 2: Calculate year-over-year percentage changes
+    yearly_changes AS (
+        SELECT 
             statename,
             year,
-            avg_yearly_index,
-            LAG(avg_yearly_index) OVER (PARTITION BY statename ORDER BY year) AS prev_year_index,
-            ((avg_yearly_index - LAG(avg_yearly_index) OVER (PARTITION BY statename ORDER BY year)) / 
-             LAG(avg_yearly_index) OVER (PARTITION BY statename ORDER BY year)) * 100 AS yoy_change_pct
-        FROM state_yearly_volatility
+            avg_index,
+            LAG(avg_index) OVER (PARTITION BY statename ORDER BY year) AS prev_year_index,
+            -- Calculate percentage change from previous year
+            ROUND(((avg_index - LAG(avg_index) OVER (PARTITION BY statename ORDER BY year)) / 
+                   LAG(avg_index) OVER (PARTITION BY statename ORDER BY year)) * 100, 2) AS yoy_change_pct
+        FROM yearly_averages
     ),
-    state_volatility_metrics AS (
-        SELECT
+    
+    -- Step 3: Calculate volatility metrics for each state
+    volatility_analysis AS (
+        SELECT 
             statename,
             COUNT(*) AS years_tracked,
-            AVG(yoy_change_pct) AS avg_yoy_change,
-            STDDEV(yoy_change_pct) AS volatility_stddev,
-            MIN(yoy_change_pct) AS min_yoy_change,
-            MAX(yoy_change_pct) AS max_yoy_change,
-            (MAX(yoy_change_pct) - MIN(yoy_change_pct)) AS volatility_range
-        FROM state_year_over_year_changes
+            ROUND(AVG(yoy_change_pct), 2) AS avg_yoy_change,
+            ROUND(STDDEV(yoy_change_pct), 2) AS volatility_stddev,
+            ROUND(MIN(yoy_change_pct), 2) AS worst_year_pct,
+            ROUND(MAX(yoy_change_pct), 2) AS best_year_pct,
+            ROUND(MAX(yoy_change_pct) - MIN(yoy_change_pct), 2) AS volatility_range
+        FROM yearly_changes
         WHERE yoy_change_pct IS NOT NULL
         GROUP BY statename
-        HAVING COUNT(*) >= 10
+        HAVING COUNT(*) >= 10  -- Only states with 10+ years of data
     )
-    SELECT
-        statename,
+    
+    -- Final result: Top 5 most volatile states
+    SELECT 
+        statename AS state,
         years_tracked,
-        ROUND(avg_yoy_change, 2) AS avg_yoy_change_pct,
-        ROUND(volatility_stddev, 2) AS volatility_stddev,
-        ROUND(volatility_range, 2) AS volatility_range_pct,
-        ROUND(min_yoy_change, 2) AS worst_year_pct,
-        ROUND(max_yoy_change, 2) AS best_year_pct
-    FROM state_volatility_metrics
+        avg_yoy_change AS avg_annual_change_pct,
+        volatility_stddev AS volatility_pct,
+        volatility_range AS range_pct,
+        worst_year_pct,
+        best_year_pct
+    FROM volatility_analysis
     ORDER BY volatility_stddev DESC
-    LIMIT 10;
+    LIMIT 5;
     """
     df4 = con.execute(q4).df()
     
@@ -469,35 +477,35 @@ def run_queries(con: duckdb.DuckDBPyConnection):
     if not df4.empty:
         # Add formatted columns for better readability
         df4_formatted = df4.copy()
-        df4_formatted['avg_yoy_change_formatted'] = df4_formatted['avg_yoy_change_pct'].apply(lambda x: f"{x:.2f}%")
-        df4_formatted['volatility_stddev_formatted'] = df4_formatted['volatility_stddev'].apply(lambda x: f"{x:.2f}%")
-        df4_formatted['volatility_range_formatted'] = df4_formatted['volatility_range_pct'].apply(lambda x: f"{x:.2f}%")
+        df4_formatted['avg_yoy_change_formatted'] = df4_formatted['avg_annual_change_pct'].apply(lambda x: f"{x:.2f}%")
+        df4_formatted['volatility_stddev_formatted'] = df4_formatted['volatility_pct'].apply(lambda x: f"{x:.2f}%")
+        df4_formatted['volatility_range_formatted'] = df4_formatted['range_pct'].apply(lambda x: f"{x:.2f}%")
         df4_formatted['worst_year_formatted'] = df4_formatted['worst_year_pct'].apply(lambda x: f"{x:.2f}%")
         df4_formatted['best_year_formatted'] = df4_formatted['best_year_pct'].apply(lambda x: f"{x:.2f}%")
         
         # Reorder columns for better presentation
-        df4_formatted = df4_formatted[['statename', 'years_tracked', 'avg_yoy_change_formatted', 'volatility_stddev_formatted', 
+        df4_formatted = df4_formatted[['state', 'years_tracked', 'avg_yoy_change_formatted', 'volatility_stddev_formatted', 
                                       'volatility_range_formatted', 'worst_year_formatted', 'best_year_formatted',
-                                      'avg_yoy_change_pct', 'volatility_stddev', 'volatility_range_pct', 'worst_year_pct', 'best_year_pct']]
+                                      'avg_annual_change_pct', 'volatility_pct', 'range_pct', 'worst_year_pct', 'best_year_pct']]
         df4_formatted.columns = ['State', 'Years_Tracked', 'Avg_YoY_Change_Formatted', 'Volatility_StdDev_Formatted', 
                                 'Volatility_Range_Formatted', 'Worst_Year_Formatted', 'Best_Year_Formatted',
                                 'Avg_YoY_Change_Raw', 'Volatility_StdDev_Raw', 'Volatility_Range_Raw', 'Worst_Year_Raw', 'Best_Year_Raw']
         
-        out = REPORTS / "Q4_Top10_States_Highest_Volatility.csv"
+        out = REPORTS / "Q4_Top5_States_Highest_Volatility.csv"
         df4_formatted.to_csv(out, index=False)
         print(f"[ok] wrote {out}")
     else:
-        df_to_csv(df4, "Q4_Top10_States_Highest_Volatility")
+        df_to_csv(df4, "Q4_Top5_States_Highest_Volatility")
     
     # Create a horizontal bar chart for Q4 showing volatility by state
     if not df4.empty:
         # Sort with highest volatility at the top
-        df4 = df4.sort_values('volatility_stddev', ascending=True)
+        df4 = df4.sort_values('volatility_pct', ascending=True)
         
         plt.figure(figsize=(12, 8))
-        bars = plt.barh(df4['statename'], df4['volatility_stddev'], color="#D32F2F", alpha=0.8, edgecolor='white', linewidth=1)
+        bars = plt.barh(df4['state'], df4['volatility_pct'], color="#D32F2F", alpha=0.8, edgecolor='white', linewidth=1)
         
-        plt.title('Top 10 States with Highest Housing Value Volatility (Year-over-Year)', fontsize=16, fontweight='bold', pad=20)
+        plt.title('Top 5 States with Highest Housing Value Volatility (Year-over-Year)', fontsize=16, fontweight='bold', pad=20)
         plt.xlabel('Volatility (Standard Deviation of YoY Changes)', fontsize=12, fontweight='bold')
         plt.ylabel('State', fontsize=12, fontweight='bold')
         plt.xticks(fontsize=10)
@@ -513,7 +521,7 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.grid(axis='x', alpha=0.3, linestyle='--')
         plt.tight_layout()
         
-        out = FIGS / "Q4_Top10_States_Highest_Volatility.png"
+        out = FIGS / "Q4_Top5_States_Highest_Volatility.png"
         plt.savefig(out, dpi=200, bbox_inches="tight")
         plt.close()
         print(f"[ok] wrote {out}")
@@ -534,7 +542,7 @@ def write_summary():
     except FileNotFoundError:
         city_growth = pd.DataFrame()
     try:
-        state_volatility = pd.read_csv(REPORTS / "Q4_Top10_States_Highest_Volatility.csv")
+        state_volatility = pd.read_csv(REPORTS / "Q4_Top5_States_Highest_Volatility.csv")
     except FileNotFoundError:
         state_volatility = pd.DataFrame()
 
@@ -555,10 +563,10 @@ def write_summary():
         top_city_growth = city_growth.sort_values("pct_growth", ascending=False).head(1).iloc[0]
         highest_city_growth_line = f"{top_city_growth['city']}, {top_city_growth['statename']} ({top_city_growth['pct_growth']:.2f}% growth)"
     
-    state_counts_line = "N/A"
-    if not state_counts.empty and {"statename", "unique_cities"}.issubset(state_counts.columns):
-        top_state = state_counts.head(1).iloc[0]
-        state_counts_line = f"{top_state['statename']} has the most cities ({top_state['unique_cities']})"
+    highest_volatility_line = "N/A"
+    if not state_volatility.empty and {"State", "Volatility_StdDev_Formatted"}.issubset(state_volatility.columns):
+        top_volatility = state_volatility.head(1).iloc[0]
+        highest_volatility_line = f"{top_volatility['State']} ({top_volatility['Volatility_StdDev_Formatted']} volatility)"
 
     REPORTS.mkdir(parents=True, exist_ok=True)
     out_path = REPORTS / "summary.txt"
@@ -568,7 +576,7 @@ def write_summary():
         f.write("- Dataset coverage: " + yearly_stats_line + "\n")
         f.write("- Highest state growth 2000-2025: " + highest_growth_line + "\n")
         f.write("- Highest city growth 2000-2025: " + highest_city_growth_line + "\n")
-        f.write("- Most cities tracked: " + state_counts_line + "\n")
+        f.write("- Highest volatility state: " + highest_volatility_line + "\n")
     print(f"[ok] wrote {out_path}")
 
 def main():

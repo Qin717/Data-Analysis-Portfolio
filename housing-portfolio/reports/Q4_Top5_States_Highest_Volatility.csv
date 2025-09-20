@@ -1,0 +1,6 @@
+State,Years_Tracked,Avg_YoY_Change_Formatted,Volatility_StdDev_Formatted,Volatility_Range_Formatted,Worst_Year_Formatted,Best_Year_Formatted,Avg_YoY_Change_Raw,Volatility_StdDev_Raw,Volatility_Range_Raw,Worst_Year_Raw,Best_Year_Raw
+KS,25,3.91%,15.66%,85.20%,-13.08%,72.12%,3.91,15.66,85.2,-13.08,72.12
+NV,25,4.80%,13.03%,55.24%,-28.08%,27.16%,4.8,13.03,55.24,-28.08,27.16
+AZ,25,5.24%,11.46%,48.27%,-20.41%,27.86%,5.24,11.46,48.27,-20.41,27.86
+ID,25,6.71%,11.15%,45.98%,-9.09%,36.89%,6.71,11.15,45.98,-9.09,36.89
+FL,25,5.61%,11.01%,44.92%,-19.08%,25.84%,5.61,11.01,44.92,-19.08,25.84
