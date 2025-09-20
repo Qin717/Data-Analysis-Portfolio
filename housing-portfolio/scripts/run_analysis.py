@@ -416,6 +416,107 @@ def run_queries(con: duckdb.DuckDBPyConnection):
         plt.close()
         print(f"[ok] wrote {out}")
     
+    # Q4: Which states show the highest volatility in housing values year-over-year?
+    q4 = """
+    WITH state_yearly_volatility AS (
+        SELECT
+            statename,
+            year,
+            AVG(yearlyindex) AS avg_yearly_index
+        FROM home_values_yearly_clean
+        WHERE yearlyindex IS NOT NULL
+        GROUP BY statename, year
+    ),
+    state_year_over_year_changes AS (
+        SELECT
+            statename,
+            year,
+            avg_yearly_index,
+            LAG(avg_yearly_index) OVER (PARTITION BY statename ORDER BY year) AS prev_year_index,
+            ((avg_yearly_index - LAG(avg_yearly_index) OVER (PARTITION BY statename ORDER BY year)) / 
+             LAG(avg_yearly_index) OVER (PARTITION BY statename ORDER BY year)) * 100 AS yoy_change_pct
+        FROM state_yearly_volatility
+    ),
+    state_volatility_metrics AS (
+        SELECT
+            statename,
+            COUNT(*) AS years_tracked,
+            AVG(yoy_change_pct) AS avg_yoy_change,
+            STDDEV(yoy_change_pct) AS volatility_stddev,
+            MIN(yoy_change_pct) AS min_yoy_change,
+            MAX(yoy_change_pct) AS max_yoy_change,
+            (MAX(yoy_change_pct) - MIN(yoy_change_pct)) AS volatility_range
+        FROM state_year_over_year_changes
+        WHERE yoy_change_pct IS NOT NULL
+        GROUP BY statename
+        HAVING COUNT(*) >= 10
+    )
+    SELECT
+        statename,
+        years_tracked,
+        ROUND(avg_yoy_change, 2) AS avg_yoy_change_pct,
+        ROUND(volatility_stddev, 2) AS volatility_stddev,
+        ROUND(volatility_range, 2) AS volatility_range_pct,
+        ROUND(min_yoy_change, 2) AS worst_year_pct,
+        ROUND(max_yoy_change, 2) AS best_year_pct
+    FROM state_volatility_metrics
+    ORDER BY volatility_stddev DESC
+    LIMIT 10;
+    """
+    df4 = con.execute(q4).df()
+    
+    # Format Q4 data for better presentation
+    if not df4.empty:
+        # Add formatted columns for better readability
+        df4_formatted = df4.copy()
+        df4_formatted['avg_yoy_change_formatted'] = df4_formatted['avg_yoy_change_pct'].apply(lambda x: f"{x:.2f}%")
+        df4_formatted['volatility_stddev_formatted'] = df4_formatted['volatility_stddev'].apply(lambda x: f"{x:.2f}%")
+        df4_formatted['volatility_range_formatted'] = df4_formatted['volatility_range_pct'].apply(lambda x: f"{x:.2f}%")
+        df4_formatted['worst_year_formatted'] = df4_formatted['worst_year_pct'].apply(lambda x: f"{x:.2f}%")
+        df4_formatted['best_year_formatted'] = df4_formatted['best_year_pct'].apply(lambda x: f"{x:.2f}%")
+        
+        # Reorder columns for better presentation
+        df4_formatted = df4_formatted[['statename', 'years_tracked', 'avg_yoy_change_formatted', 'volatility_stddev_formatted', 
+                                      'volatility_range_formatted', 'worst_year_formatted', 'best_year_formatted',
+                                      'avg_yoy_change_pct', 'volatility_stddev', 'volatility_range_pct', 'worst_year_pct', 'best_year_pct']]
+        df4_formatted.columns = ['State', 'Years_Tracked', 'Avg_YoY_Change_Formatted', 'Volatility_StdDev_Formatted', 
+                                'Volatility_Range_Formatted', 'Worst_Year_Formatted', 'Best_Year_Formatted',
+                                'Avg_YoY_Change_Raw', 'Volatility_StdDev_Raw', 'Volatility_Range_Raw', 'Worst_Year_Raw', 'Best_Year_Raw']
+        
+        out = REPORTS / "Q4_Top10_States_Highest_Volatility.csv"
+        df4_formatted.to_csv(out, index=False)
+        print(f"[ok] wrote {out}")
+    else:
+        df_to_csv(df4, "Q4_Top10_States_Highest_Volatility")
+    
+    # Create a horizontal bar chart for Q4 showing volatility by state
+    if not df4.empty:
+        # Sort with highest volatility at the top
+        df4 = df4.sort_values('volatility_stddev', ascending=True)
+        
+        plt.figure(figsize=(12, 8))
+        bars = plt.barh(df4['statename'], df4['volatility_stddev'], color="#D32F2F", alpha=0.8, edgecolor='white', linewidth=1)
+        
+        plt.title('Top 10 States with Highest Housing Value Volatility (Year-over-Year)', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Volatility (Standard Deviation of YoY Changes)', fontsize=12, fontweight='bold')
+        plt.ylabel('State', fontsize=12, fontweight='bold')
+        plt.xticks(fontsize=10)
+        plt.yticks(fontsize=10)
+        
+        # Add value labels on the right side of bars
+        for i, bar in enumerate(bars):
+            width = bar.get_width()
+            plt.text(width + width*0.01, bar.get_y() + bar.get_height()/2,
+                    f'{width:.2f}%', ha='left', va='center', fontsize=10, fontweight='bold')
+        
+        # Add grid for better readability
+        plt.grid(axis='x', alpha=0.3, linestyle='--')
+        plt.tight_layout()
+        
+        out = FIGS / "Q4_Top10_States_Highest_Volatility.png"
+        plt.savefig(out, dpi=200, bbox_inches="tight")
+        plt.close()
+        print(f"[ok] wrote {out}")
 
 
 def write_summary():

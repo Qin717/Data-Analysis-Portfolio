@@ -118,3 +118,50 @@ JOIN city_2025 c2025 ON c2000.city = c2025.city AND c2000.statename = c2025.stat
 ORDER BY pct_growth DESC
 LIMIT 5;
 
+-- Q4. Which states show the highest volatility in housing values year-over-year?
+
+WITH state_yearly_volatility AS (
+    SELECT
+        statename,
+        year,
+        AVG(yearlyindex) AS avg_yearly_index
+    FROM home_values_yearly_clean
+    WHERE yearlyindex IS NOT NULL
+    GROUP BY statename, year
+),
+state_year_over_year_changes AS (
+    SELECT
+        statename,
+        year,
+        avg_yearly_index,
+        LAG(avg_yearly_index) OVER (PARTITION BY statename ORDER BY year) AS prev_year_index,
+        ((avg_yearly_index - LAG(avg_yearly_index) OVER (PARTITION BY statename ORDER BY year)) / 
+         LAG(avg_yearly_index) OVER (PARTITION BY statename ORDER BY year)) * 100 AS yoy_change_pct
+    FROM state_yearly_volatility
+),
+state_volatility_metrics AS (
+    SELECT
+        statename,
+        COUNT(*) AS years_tracked,
+        AVG(yoy_change_pct) AS avg_yoy_change,
+        STDDEV(yoy_change_pct) AS volatility_stddev,
+        MIN(yoy_change_pct) AS min_yoy_change,
+        MAX(yoy_change_pct) AS max_yoy_change,
+        (MAX(yoy_change_pct) - MIN(yoy_change_pct)) AS volatility_range
+    FROM state_year_over_year_changes
+    WHERE yoy_change_pct IS NOT NULL
+    GROUP BY statename
+    HAVING COUNT(*) >= 10  -- Only include states with at least 10 years of data
+)
+SELECT
+    statename,
+    years_tracked,
+    ROUND(avg_yoy_change, 2) AS avg_yoy_change_pct,
+    ROUND(volatility_stddev, 2) AS volatility_stddev,
+    ROUND(volatility_range, 2) AS volatility_range_pct,
+    ROUND(min_yoy_change, 2) AS worst_year_pct,
+    ROUND(max_yoy_change, 2) AS best_year_pct
+FROM state_volatility_metrics
+ORDER BY volatility_stddev DESC
+LIMIT 10;
+

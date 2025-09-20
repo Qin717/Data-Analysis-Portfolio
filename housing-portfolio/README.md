@@ -10,6 +10,7 @@ This project analyzes home value index data across all U.S. states and cities to
 1. **Q1**: What are the yearly average home value indices by state?
 2. **Q2**: Which 5 states showed the highest growth from 2000-2025?
 3. **Q3**: Which 5 cities showed the highest growth from 2000-2025?
+4. **Q4**: Which states show the highest volatility in housing values year-over-year?
 
 ## 🛠️ Technical Skills Demonstrated
 
@@ -47,6 +48,7 @@ housing-portfolio/
 │   ├── Q1_Top10_States_Average_Values.xlsx
 │   ├── Q2_Top5_Home_Values_Growth.xlsx
 │   ├── Q3_Top5_Cities_Growth_Analysis.xlsx
+│   ├── Q4_State_Volatility_Analysis.xlsx
 │   └── README.md
 ├── reports/                       # Analysis outputs
 │   ├── figures/                   # Charts and visualizations
@@ -88,6 +90,12 @@ python scripts/create_excel_workbooks.py
 - **Las Vegas, NV** tops city growth rankings
 - **Phoenix, AZ** and **Miami, FL** follow closely
 - **Urban centers** show more dramatic growth than rural areas
+
+### Q4: Market Volatility Analysis
+- **Kansas (KS)** shows highest volatility with 15.66% standard deviation
+- **Nevada (NV)** and **Arizona (AZ)** follow with high volatility
+- **Sun Belt states** generally show higher volatility than traditional markets
+- **Volatility range** varies from 32% to 85% across different states
 
 
 ## 📊 Visualizations
